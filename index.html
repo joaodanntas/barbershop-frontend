@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RZR Barber Shop — Agende seu horário</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <nav class="hero-nav">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="RZR Barber Shop">
+    </div>
+    <div class="nav-actions" id="navActions"></div>
+  </nav>
+  <div class="hero-content">
+    <div class="eyebrow">Franca · Agendamento online</div>
+    <h1>ELEVE O NÍVEL<br>DA SUA <em>AUTOESTIMA</em>.</h1>
+    <p>Escolha o barbeiro, o serviço e o horário. Sem ligação, sem espera.</p>
+  </div>
+</header>
+<div class="stripes"></div>
+
+<main>
+  <!-- Card: fluxo de agendamento -->
+  <section class="card" id="bookingCard">
+    <div class="section-label">Nova reserva</div>
+    <h2 class="section-title">Marque seu horário</h2>
+
+    <div class="steps">
+      <div class="step active" id="step1">01 · Barbeiro</div>
+      <div class="step" id="step2">02 · Serviço</div>
+      <div class="step" id="step3">03 · Data</div>
+      <div class="step" id="step4">04 · Horário</div>
+    </div>
+
+    <div id="barberStep">
+      <div class="choice-grid" id="barberGrid"></div>
+    </div>
+
+    <div id="serviceStep" class="hidden">
+      <div class="choice-grid" id="serviceGrid"></div>
+    </div>
+
+    <div id="dateStep" class="hidden">
+      <div class="field" style="max-width:220px">
+        <label>Escolha a data</label>
+        <input type="date" id="dateInput">
+      </div>
+      <button class="btn btn-primary" id="btnLoadSlots">Ver horários</button>
+    </div>
+
+    <div id="slotStep" class="hidden">
+      <div class="slot-grid" id="slotGrid"></div>
+      <p class="empty" id="noSlots" style="display:none">Nenhum horário disponível nesse dia. Tente outra data.</p>
+    </div>
+  </section>
+
+  <!-- Card: meus agendamentos -->
+  <section class="card hidden" id="myApptsCard">
+    <div class="section-label">Sua conta</div>
+    <h2 class="section-title">Meus agendamentos</h2>
+    <div id="apptList"></div>
+  </section>
+</main>
+
+<footer>RZR BARBER SHOP · FRANCA-SP</footer>
+
+<!-- Modal login/cadastro -->
+<div class="modal-backdrop hidden" id="authModal">
+  <div class="modal">
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabLogin">Entrar</button>
+      <button class="tab-btn" id="tabCadastro">Criar conta</button>
+    </div>
+
+    <div id="loginForm">
+      <h3>Entrar</h3>
+      <div class="field"><label>Email</label><input type="email" id="loginEmail"></div>
+      <div class="field"><label>Senha</label><input type="password" id="loginSenha"></div>
+      <button class="btn btn-primary" style="width:100%" id="btnLogin">Entrar</button>
+    </div>
+
+    <div id="cadastroForm" class="hidden">
+      <h3>Criar conta</h3>
+      <div class="field"><label>Nome</label><input type="text" id="cadNome"></div>
+      <div class="field"><label>Email</label><input type="email" id="cadEmail"></div>
+      <div class="field"><label>Telefone</label><input type="tel" id="cadTelefone"></div>
+      <div class="field"><label>Senha</label><input type="password" id="cadSenha"></div>
+      <button class="btn btn-primary" style="width:100%" id="btnCadastro">Criar conta</button>
+    </div>
+
+    <div style="margin-top:14px;text-align:center">
+      <button class="link-btn" id="btnCloseModal">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmação de reserva -->
+<div class="modal-backdrop hidden" id="confirmModal">
+  <div class="modal">
+    <h3>Confirmar reserva</h3>
+    <p id="confirmSummary" style="margin-bottom:20px;color:var(--muted);font-size:15px"></p>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnConfirmBooking">Confirmar agendamento</button>
+    <button class="link-btn" id="btnCancelConfirm" style="width:100%">Voltar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+let barbeiros = [], servicos = [];
+let selected = { barbeiro: null, servico: null, data: null, slot: null };
+
+// ---------- Header / sessão ----------
+function renderNav() {
+  const nav = document.getElementById("navActions");
+  const user = getUser();
+  if (user) {
+    nav.innerHTML = `
+      <span style="color:var(--cream);font-size:14px">Olá, ${user.nome.split(" ")[0]}</span>
+      <button class="btn btn-ghost btn-small" id="btnMyAppts">Meus agendamentos</button>
+      <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>
+    `;
+    document.getElementById("btnMyAppts").onclick = showMyAppointments;
+    document.getElementById("btnLogout").onclick = () => { clearSession(); renderNav(); toast("Sessão encerrada"); document.getElementById("myApptsCard").classList.add("hidden"); };
+  } else {
+    nav.innerHTML = `<button class="btn btn-primary btn-small" id="btnOpenAuth">Entrar</button>`;
+    document.getElementById("btnOpenAuth").onclick = () => openAuthModal();
+  }
+}
+
+// ---------- Auth modal ----------
+function openAuthModal() { document.getElementById("authModal").classList.remove("hidden"); }
+function closeAuthModal() { document.getElementById("authModal").classList.add("hidden"); }
+
+document.getElementById("btnCloseModal").onclick = closeAuthModal;
+document.getElementById("tabLogin").onclick = () => switchTab("login");
+document.getElementById("tabCadastro").onclick = () => switchTab("cadastro");
+
+function switchTab(tab) {
+  document.getElementById("tabLogin").classList.toggle("active", tab === "login");
+  document.getElementById("tabCadastro").classList.toggle("active", tab === "cadastro");
+  document.getElementById("loginForm").classList.toggle("hidden", tab !== "login");
+  document.getElementById("cadastroForm").classList.toggle("hidden", tab !== "cadastro");
+}
+
+document.getElementById("btnLogin").onclick = async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  const senha = document.getElementById("loginSenha").value;
+  if (!email || !senha) return toast("Preencha email e senha", true);
+  try {
+    const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, senha }) });
+    saveSession(data.token, data.nome, data.email, data.perfil);
+    renderNav(); closeAuthModal();
+    toast(`Bem-vindo, ${data.nome.split(" ")[0]}!`);
+  } catch (e) { toast(e.message, true); }
+};
+
+document.getElementById("btnCadastro").onclick = async () => {
+  const nome = document.getElementById("cadNome").value.trim();
+  const email = document.getElementById("cadEmail").value.trim();
+  const telefone = document.getElementById("cadTelefone").value.trim();
+  const senha = document.getElementById("cadSenha").value;
+  if (!nome || !email || !senha) return toast("Preencha os campos obrigatórios", true);
+  try {
+    const data = await api("/api/auth/cadastro", { method: "POST", body: JSON.stringify({ nome, email, senha, telefone }) });
+    saveSession(data.token, data.nome, data.email, data.perfil);
+    renderNav(); closeAuthModal();
+    toast(`Conta criada! Bem-vindo, ${data.nome.split(" ")[0]}!`);
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Fluxo de agendamento ----------
+async function loadBarbeiros() {
+  try {
+    barbeiros = await api("/api/barbeiros");
+    const grid = document.getElementById("barberGrid");
+    grid.innerHTML = barbeiros.map(b => `
+      <div class="choice-card" data-id="${b.id}">
+        <div class="name">${b.nome}</div>
+        <div class="meta">${b.telefone || "Barbeiro"}</div>
+      </div>`).join("");
+    grid.querySelectorAll(".choice-card").forEach(el => el.onclick = () => selectBarbeiro(el));
+  } catch (e) { toast(e.message, true); }
+}
+
+function selectBarbeiro(el) {
+  document.querySelectorAll("#barberGrid .choice-card").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  selected.barbeiro = barbeiros.find(b => b.id == el.dataset.id);
+  markStep(1, 2);
+  loadServicos();
+}
+
+async function loadServicos() {
+  try {
+    servicos = await api("/api/servicos");
+    const grid = document.getElementById("serviceGrid");
+    grid.innerHTML = servicos.map(s => `
+      <div class="choice-card" data-id="${s.id}">
+        <div class="name">${s.nome}</div>
+        <div class="meta">${s.duracaoMinutos} min · ${formatMoney(s.preco)}</div>
+      </div>`).join("");
+    grid.querySelectorAll(".choice-card").forEach(el => el.onclick = () => selectServico(el));
+    document.getElementById("serviceStep").classList.remove("hidden");
+  } catch (e) { toast(e.message, true); }
+}
+
+function selectServico(el) {
+  document.querySelectorAll("#serviceGrid .choice-card").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  selected.servico = servicos.find(s => s.id == el.dataset.id);
+  markStep(2, 3);
+  document.getElementById("dateStep").classList.remove("hidden");
+  const dateInput = document.getElementById("dateInput");
+  const today = new Date().toISOString().split("T")[0];
+  dateInput.min = today;
+  if (!dateInput.value) dateInput.value = today;
+}
+
+document.getElementById("btnLoadSlots").onclick = async () => {
+  const data = document.getElementById("dateInput").value;
+  if (!data) return toast("Escolha uma data", true);
+  selected.data = data;
+  markStep(3, 4);
+  try {
+    const slots = await api(`/api/agendamentos/horarios-disponiveis?barbeiroId=${selected.barbeiro.id}&servicoId=${selected.servico.id}&data=${data}`);
+    const grid = document.getElementById("slotGrid");
+    document.getElementById("slotStep").classList.remove("hidden");
+    document.getElementById("noSlots").style.display = slots.length ? "none" : "block";
+    grid.innerHTML = slots.map(s => `<div class="slot" data-inicio="${s.inicio}">${formatTime(s.inicio)}</div>`).join("");
+    grid.querySelectorAll(".slot").forEach(el => el.onclick = () => selectSlot(el));
+  } catch (e) { toast(e.message, true); }
+};
+
+function selectSlot(el) {
+  document.querySelectorAll("#slotGrid .slot").forEach(s => s.classList.remove("selected"));
+  el.classList.add("selected");
+  selected.slot = el.dataset.inicio;
+  openConfirmModal();
+}
+
+function markStep(fromIdx, toIdx) {
+  document.getElementById(`step${fromIdx}`).classList.add("done");
+  document.getElementById(`step${toIdx}`).classList.add("active");
+}
+
+// ---------- Confirmação ----------
+function openConfirmModal() {
+  if (!isLoggedIn()) {
+    toast("Entre na sua conta para confirmar o agendamento", true);
+    openAuthModal();
+    return;
+  }
+  const resumo = `${selected.barbeiro.nome} · ${selected.servico.nome} · ${formatDateTime(selected.slot)}`;
+  document.getElementById("confirmSummary").textContent = resumo;
+  document.getElementById("confirmModal").classList.remove("hidden");
+}
+document.getElementById("btnCancelConfirm").onclick = () => document.getElementById("confirmModal").classList.add("hidden");
+
+document.getElementById("btnConfirmBooking").onclick = async () => {
+  try {
+    await api("/api/agendamentos", {
+      method: "POST",
+      body: JSON.stringify({
+        barbeiroId: selected.barbeiro.id,
+        servicoId: selected.servico.id,
+        dataHoraInicio: selected.slot
+      })
+    });
+    document.getElementById("confirmModal").classList.add("hidden");
+    toast("Agendamento confirmado! 🎉");
+    resetFlow();
+    showMyAppointments();
+  } catch (e) { toast(e.message, true); }
+};
+
+function resetFlow() {
+  selected = { barbeiro: null, servico: null, data: null, slot: null };
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active", "done"));
+  document.getElementById("step1").classList.add("active");
+  document.getElementById("serviceStep").classList.add("hidden");
+  document.getElementById("dateStep").classList.add("hidden");
+  document.getElementById("slotStep").classList.add("hidden");
+  document.querySelectorAll(".choice-card").forEach(c => c.classList.remove("selected"));
+}
+
+// ---------- Meus agendamentos ----------
+async function showMyAppointments() {
+  if (!isLoggedIn()) return openAuthModal();
+  try {
+    const appts = await api("/api/agendamentos/meus");
+    const card = document.getElementById("myApptsCard");
+    const list = document.getElementById("apptList");
+    card.classList.remove("hidden");
+    card.scrollIntoView({ behavior: "smooth" });
+
+    if (!appts.length) {
+      list.innerHTML = `<div class="empty"><div class="display">—</div>Você ainda não tem agendamentos.</div>`;
+      return;
+    }
+
+    list.innerHTML = appts.map(a => `
+      <div class="appt">
+        <div class="appt-info">
+          <div class="name">${a.servicoNome} com ${a.barbeiroNome}</div>
+          <div class="meta">${formatDateTime(a.dataHoraInicio)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status)}</span>
+          ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}">Cancelar</button>` : ""}
+        </div>
+      </div>`).join("");
+
+    list.querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm("Cancelar este agendamento?")) return;
+        try {
+          await api(`/api/agendamentos/${btn.dataset.id}/cancelar`, { method: "PATCH" });
+          toast("Agendamento cancelado");
+          showMyAppointments();
+        } catch (e) { toast(e.message, true); }
+      };
+    });
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------- Init ----------
+renderNav();
+loadBarbeiros();
+</script>
+</body>
+</html>

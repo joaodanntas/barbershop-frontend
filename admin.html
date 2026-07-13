@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel · RZR Barber Shop</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero" style="padding-bottom:32px">
+  <nav class="hero-nav" style="margin-bottom:0">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="RZR Barber Shop">
+    </div>
+    <div class="nav-actions" id="navActions"></div>
+  </nav>
+</header>
+<div class="stripes"></div>
+
+<main>
+  <!-- Login gate -->
+  <section class="card" id="loginGate">
+    <div class="section-label">Acesso restrito</div>
+    <h2 class="section-title">Painel do barbeiro</h2>
+    <div class="field" style="max-width:320px"><label>Email</label><input type="email" id="loginEmail"></div>
+    <div class="field" style="max-width:320px"><label>Senha</label><input type="password" id="loginSenha"></div>
+    <button class="btn btn-primary" id="btnLogin">Entrar</button>
+  </section>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <section class="card">
+      <div class="section-label">Agenda</div>
+      <h2 class="section-title">Todos os agendamentos</h2>
+      <div id="apptList"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-label">Equipe</div>
+      <h2 class="section-title">Barbeiros</h2>
+      <div id="barberList" style="margin-bottom:20px"></div>
+      <details>
+        <summary style="cursor:pointer;font-weight:600;color:var(--brick);margin-bottom:12px">+ Cadastrar barbeiro</summary>
+        <div class="field" style="max-width:320px"><label>Nome</label><input type="text" id="newBarberNome"></div>
+        <div class="field" style="max-width:320px"><label>Telefone</label><input type="tel" id="newBarberTelefone"></div>
+        <button class="btn btn-outline btn-small" id="btnAddBarber">Adicionar</button>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="section-label">Cardápio</div>
+      <h2 class="section-title">Serviços</h2>
+      <div id="serviceList" style="margin-bottom:20px"></div>
+      <details>
+        <summary style="cursor:pointer;font-weight:600;color:var(--brick);margin-bottom:12px">+ Cadastrar serviço</summary>
+        <div class="field" style="max-width:320px"><label>Nome</label><input type="text" id="newServicoNome"></div>
+        <div class="field" style="max-width:320px"><label>Duração (min)</label><input type="number" id="newServicoDuracao"></div>
+        <div class="field" style="max-width:320px"><label>Preço (R$)</label><input type="number" step="0.01" id="newServicoPreco"></div>
+        <button class="btn btn-outline btn-small" id="btnAddServico">Adicionar</button>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="section-label">Horários de trabalho</div>
+      <h2 class="section-title">Disponibilidade</h2>
+      <p style="color:var(--silver-dim);font-size:14px;margin-bottom:16px">Cadastre em qual barbeiro, dia da semana e faixa de horário ele atende.</p>
+      <div class="field" style="max-width:320px">
+        <label>Barbeiro</label>
+        <select id="dispBarbeiro" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'"></select>
+      </div>
+      <div class="field" style="max-width:320px">
+        <label>Dia da semana</label>
+        <select id="dispDia" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+          <option value="0">Domingo</option><option value="1">Segunda</option><option value="2">Terça</option>
+          <option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;max-width:320px">
+        <div class="field" style="flex:1"><label>Início</label><input type="time" id="dispInicio" value="09:00"></div>
+        <div class="field" style="flex:1"><label>Fim</label><input type="time" id="dispFim" value="18:00"></div>
+      </div>
+      <div style="display:flex;gap:12px;max-width:320px">
+        <div class="field" style="flex:1"><label>Pausa (início)</label><input type="time" id="dispPausaInicio"></div>
+        <div class="field" style="flex:1"><label>Pausa (fim)</label><input type="time" id="dispPausaFim"></div>
+      </div>
+      <p style="color:var(--silver-dim);font-size:12px;margin:-8px 0 14px">Deixe em branco se o barbeiro não tiver pausa nesse dia.</p>
+      <button class="btn btn-outline btn-small" id="btnAddDisp">Adicionar horário</button>
+    </section>
+  </div>
+</main>
+
+<footer>PAINEL ADMINISTRATIVO · RZR BARBER SHOP</footer>
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+let barbeirosCache = [];
+
+function renderNav() {
+  const nav = document.getElementById("navActions");
+  const user = getUser();
+  if (user && user.perfil === "Admin") {
+    nav.innerHTML = `<span style="color:var(--cream);font-size:14px">${user.nome}</span> <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>`;
+    document.getElementById("btnLogout").onclick = () => { clearSession(); location.reload(); };
+  } else {
+    nav.innerHTML = "";
+  }
+}
+
+function checkAccess() {
+  const user = getUser();
+  if (user && user.perfil === "Admin") {
+    document.getElementById("loginGate").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    loadAll();
+  } else {
+    document.getElementById("loginGate").classList.remove("hidden");
+    document.getElementById("dashboard").classList.add("hidden");
+  }
+}
+
+document.getElementById("btnLogin").onclick = async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  const senha = document.getElementById("loginSenha").value;
+  try {
+    const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, senha }) });
+    if (data.perfil !== "Admin") { toast("Essa conta não tem acesso administrativo", true); return; }
+    saveSession(data.token, data.nome, data.email, data.perfil);
+    renderNav(); checkAccess();
+    toast(`Bem-vindo, ${data.nome}`);
+  } catch (e) { toast(e.message, true); }
+};
+
+async function loadAll() {
+  await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos()]);
+}
+
+// ---------- Agendamentos ----------
+async function loadAppointments() {
+  try {
+    const appts = await api("/api/agendamentos/admin/todos");
+    const list = document.getElementById("apptList");
+    if (!appts.length) {
+      list.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum agendamento ainda.</div>`;
+      return;
+    }
+    list.innerHTML = appts.map(a => `
+      <div class="appt">
+        <div class="appt-info">
+          <div class="name">${a.clienteNome} · ${a.servicoNome}</div>
+          <div class="meta">${a.barbeiroNome} · ${formatDateTime(a.dataHoraInicio)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status)}</span>
+          ${a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
+          ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
+        </div>
+      </div>`).join("");
+
+    list.querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = async () => {
+        try {
+          await api(`/api/agendamentos/admin/${btn.dataset.id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: btn.dataset.status })
+          });
+          toast("Status atualizado");
+          loadAppointments();
+        } catch (e) { toast(e.message, true); }
+      };
+    });
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------- Barbeiros ----------
+async function loadBarbeiros() {
+  try {
+    barbeirosCache = await api("/api/barbeiros/todos");
+    document.getElementById("barberList").innerHTML = barbeirosCache.map(b => `
+      <div class="appt">
+        <div class="appt-info"><div class="name">${b.nome}</div><div class="meta">${b.telefone || "—"}</div></div>
+        <span class="badge ${b.ativo ? "badge-confirmado" : "badge-cancelado"}">${b.ativo ? "Ativo" : "Inativo"}</span>
+      </div>`).join("");
+
+    const sel = document.getElementById("dispBarbeiro");
+    sel.innerHTML = barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+  } catch (e) { toast(e.message, true); }
+}
+
+document.getElementById("btnAddBarber").onclick = async () => {
+  const nome = document.getElementById("newBarberNome").value.trim();
+  const telefone = document.getElementById("newBarberTelefone").value.trim();
+  if (!nome) return toast("Informe o nome", true);
+  try {
+    await api("/api/barbeiros", { method: "POST", body: JSON.stringify({ nome, telefone }) });
+    toast("Barbeiro cadastrado");
+    document.getElementById("newBarberNome").value = "";
+    document.getElementById("newBarberTelefone").value = "";
+    loadBarbeiros();
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Serviços ----------
+async function loadServicos() {
+  try {
+    const servicos = await api("/api/servicos");
+    document.getElementById("serviceList").innerHTML = servicos.map(s => `
+      <div class="appt">
+        <div class="appt-info"><div class="name">${s.nome}</div><div class="meta">${s.duracaoMinutos} min · ${formatMoney(s.preco)}</div></div>
+      </div>`).join("");
+  } catch (e) { toast(e.message, true); }
+}
+
+document.getElementById("btnAddServico").onclick = async () => {
+  const nome = document.getElementById("newServicoNome").value.trim();
+  const duracaoMinutos = parseInt(document.getElementById("newServicoDuracao").value);
+  const preco = parseFloat(document.getElementById("newServicoPreco").value);
+  if (!nome || !duracaoMinutos || !preco) return toast("Preencha todos os campos", true);
+  try {
+    await api("/api/servicos", { method: "POST", body: JSON.stringify({ nome, duracaoMinutos, preco }) });
+    toast("Serviço cadastrado");
+    document.getElementById("newServicoNome").value = "";
+    document.getElementById("newServicoDuracao").value = "";
+    document.getElementById("newServicoPreco").value = "";
+    loadServicos();
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Disponibilidade ----------
+document.getElementById("btnAddDisp").onclick = async () => {
+  const barbeiroId = document.getElementById("dispBarbeiro").value;
+  const diaSemana = parseInt(document.getElementById("dispDia").value);
+  const horaInicio = document.getElementById("dispInicio").value + ":00";
+  const horaFim = document.getElementById("dispFim").value + ":00";
+  const pausaInicioVal = document.getElementById("dispPausaInicio").value;
+  const pausaFimVal = document.getElementById("dispPausaFim").value;
+  const pausaInicio = pausaInicioVal ? pausaInicioVal + ":00" : null;
+  const pausaFim = pausaFimVal ? pausaFimVal + ":00" : null;
+  if (!barbeiroId) return toast("Cadastre um barbeiro primeiro", true);
+  try {
+    await api(`/api/barbeiros/${barbeiroId}/disponibilidades`, {
+      method: "POST",
+      body: JSON.stringify({ diaSemana, horaInicio, horaFim, pausaInicio, pausaFim })
+    });
+    toast("Horário de trabalho adicionado");
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Init ----------
+renderNav();
+checkAccess();
+</script>
+</body>
+</html>
