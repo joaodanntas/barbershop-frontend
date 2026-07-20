@@ -273,7 +273,7 @@ document.getElementById("btnConfirmBooking").onclick = async () => {
       })
     });
     document.getElementById("confirmModal").classList.add("hidden");
-    toast("Agendamento confirmado! 🎉");
+    toast("Agendamento solicitado! 🎉");
     resetFlow();
     showMyAppointments();
   } catch (e) { toast(e.message, true); }

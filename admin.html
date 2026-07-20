@@ -91,6 +91,27 @@
       <p style="color:var(--silver-dim);font-size:12px;margin:-8px 0 14px">Deixe em branco se o barbeiro não tiver pausa nesse dia.</p>
       <button class="btn btn-outline btn-small" id="btnAddDisp">Adicionar horário</button>
     </section>
+
+    <section class="card">
+      <div class="section-label">Fechado</div>
+      <h2 class="section-title">Bloqueio de datas</h2>
+      <p style="color:var(--silver-dim);font-size:14px;margin-bottom:16px">Feriados (todos os barbeiros) ou folgas individuais.</p>
+
+      <div id="bloqueioList" style="margin-bottom:20px"></div>
+
+      <details>
+        <summary style="cursor:pointer;font-weight:600;color:var(--brick);margin-bottom:12px">+ Cadastrar bloqueio</summary>
+        <div class="field" style="max-width:320px">
+          <label>Barbeiro</label>
+          <select id="bloqueioBarbeiro" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+            <option value="">Todos os barbeiros (feriado)</option>
+          </select>
+        </div>
+        <div class="field" style="max-width:320px"><label>Data</label><input type="date" id="bloqueioData"></div>
+        <div class="field" style="max-width:320px"><label>Motivo (opcional)</label><input type="text" id="bloqueioMotivo"></div>
+        <button class="btn btn-outline btn-small" id="btnAddBloqueio">Adicionar</button>
+      </details>
+    </section>
   </div>
 </main>
 
@@ -137,7 +158,7 @@ document.getElementById("btnLogin").onclick = async () => {
 };
 
 async function loadAll() {
-  await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos()]);
+  await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos(), loadBloqueios()]);
 }
 
 // ---------- Agendamentos ----------
@@ -189,6 +210,10 @@ async function loadBarbeiros() {
 
     const sel = document.getElementById("dispBarbeiro");
     sel.innerHTML = barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+
+    const selBloqueio = document.getElementById("bloqueioBarbeiro");
+    selBloqueio.innerHTML = `<option value="">Todos os barbeiros (feriado)</option>` +
+      barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
   } catch (e) { toast(e.message, true); }
 }
 
@@ -233,6 +258,51 @@ document.getElementById("btnAddServico").onclick = async () => {
     document.getElementById("newServicoPreco").value = "";
     document.getElementById("newServicoAntecedencia").value = "0";
     loadServicos();
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Bloqueios de data ----------
+async function loadBloqueios() {
+  try {
+    const bloqueios = await api("/api/bloqueios");
+    document.getElementById("bloqueioList").innerHTML = bloqueios.length
+      ? bloqueios.map(b => `
+        <div class="appt">
+          <div class="appt-info">
+            <div class="name">${b.barbeiroNome || "Todos os barbeiros (feriado)"}</div>
+            <div class="meta">${formatDateOnly(b.data)}${b.motivo ? " · " + b.motivo : ""}</div>
+          </div>
+          <button class="btn btn-danger btn-small" data-id="${b.id}">Remover</button>
+        </div>`).join("")
+      : `<div class="empty"><div class="display">—</div>Nenhum bloqueio cadastrado.</div>`;
+
+    document.getElementById("bloqueioList").querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm("Remover este bloqueio?")) return;
+        try {
+          await api(`/api/bloqueios/${btn.dataset.id}`, { method: "DELETE" });
+          toast("Bloqueio removido");
+          loadBloqueios();
+        } catch (e) { toast(e.message, true); }
+      };
+    });
+  } catch (e) { toast(e.message, true); }
+}
+
+document.getElementById("btnAddBloqueio").onclick = async () => {
+  const barbeiroId = document.getElementById("bloqueioBarbeiro").value || null;
+  const data = document.getElementById("bloqueioData").value;
+  const motivo = document.getElementById("bloqueioMotivo").value.trim() || null;
+  if (!data) return toast("Escolha uma data", true);
+  try {
+    await api("/api/bloqueios", {
+      method: "POST",
+      body: JSON.stringify({ barbeiroId: barbeiroId ? parseInt(barbeiroId) : null, data, motivo })
+    });
+    toast("Bloqueio cadastrado");
+    document.getElementById("bloqueioData").value = "";
+    document.getElementById("bloqueioMotivo").value = "";
+    loadBloqueios();
   } catch (e) { toast(e.message, true); }
 };
 
