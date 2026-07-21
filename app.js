@@ -1,5 +1,5 @@
 // ===== Configuração =====
-const API_BASE_URL = "http://localhost:5112"; // depois: URL do Render
+const API_BASE_URL = "https://barbershop-api-acij.onrender.com";
 
 // ===== Auth helpers =====
 function getToken() { return localStorage.getItem("bs_token"); }
