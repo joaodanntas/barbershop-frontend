@@ -24,7 +24,13 @@
     <div class="section-label">Acesso restrito</div>
     <h2 class="section-title">Painel do barbeiro</h2>
     <div class="field" style="max-width:320px"><label>Email</label><input type="email" id="loginEmail"></div>
-    <div class="field" style="max-width:320px"><label>Senha</label><input type="password" id="loginSenha"></div>
+    <div class="field" style="max-width:320px">
+      <label>Senha</label>
+      <div class="password-wrapper">
+        <input type="password" id="loginSenha">
+        <button type="button" class="toggle-password" data-target="loginSenha">👁</button>
+      </div>
+    </div>
     <button class="btn btn-primary" id="btnLogin">Entrar</button>
   </section>
 
@@ -76,13 +82,14 @@
       <div class="field" style="max-width:320px">
         <label>Dia da semana</label>
         <select id="dispDia" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+          <option value="" disabled selected>Selecione o dia</option>
           <option value="0">Domingo</option><option value="1">Segunda</option><option value="2">Terça</option>
           <option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option>
         </select>
       </div>
       <div style="display:flex;gap:12px;max-width:320px">
         <div class="field" style="flex:1"><label>Início</label><input type="time" id="dispInicio" value="09:00"></div>
-        <div class="field" style="flex:1"><label>Fim</label><input type="time" id="dispFim" value="18:00"></div>
+        <div class="field" style="flex:1"><label>Fim</label><input type="time" id="dispFim" value="20:00"></div>
       </div>
       <div style="display:flex;gap:12px;max-width:320px">
         <div class="field" style="flex:1"><label>Pausa (início)</label><input type="time" id="dispPausaInicio"></div>
@@ -110,10 +117,86 @@
         <div class="field" style="max-width:320px"><label>Data</label><input type="date" id="bloqueioData"></div>
         <div class="field" style="max-width:320px"><label>Motivo (opcional)</label><input type="text" id="bloqueioMotivo"></div>
         <button class="btn btn-outline btn-small" id="btnAddBloqueio">Adicionar</button>
+        <button class="link-btn hidden" id="btnCancelEditBloqueio" style="margin-left:10px">Cancelar edição</button>
       </details>
     </section>
   </div>
 </main>
+
+<!-- Modal editar serviço -->
+<div class="modal-backdrop hidden" id="editServicoModal">
+  <div class="modal">
+    <h3>Editar serviço</h3>
+    <div class="field"><label>Nome</label><input type="text" id="editServicoNome"></div>
+    <div class="field"><label>Duração (min)</label><input type="number" id="editServicoDuracao"></div>
+    <div class="field"><label>Preço (R$)</label><input type="number" step="0.01" id="editServicoPreco"></div>
+    <div class="field"><label>Antecedência mínima (min)</label><input type="number" id="editServicoAntecedencia"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnSalvarServico">Salvar alterações</button>
+    <button class="link-btn" id="btnCancelEditServico" style="width:100%">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal editar barbeiro -->
+<div class="modal-backdrop hidden" id="editBarbeiroModal">
+  <div class="modal" style="max-width:520px">
+    <h3>Editar barbeiro</h3>
+    <div class="field"><label>Nome</label><input type="text" id="editBarbeiroNome"></div>
+    <div class="field"><label>Telefone</label><input type="tel" id="editBarbeiroTelefone"></div>
+    <button class="btn btn-primary btn-small" id="btnSalvarBarbeiro" style="margin-bottom:20px">Salvar dados</button>
+
+    <div class="stripes" style="margin-bottom:20px"></div>
+
+    <h3 style="font-size:20px;margin-bottom:14px">Disponibilidades</h3>
+    <div id="editDisponibilidadeList" style="margin-bottom:20px"></div>
+
+    <details>
+      <summary style="cursor:pointer;font-weight:600;color:var(--brick);margin-bottom:12px">+ Adicionar novo horário</summary>
+      <div class="field">
+        <label>Dia da semana</label>
+        <select id="editDispDiaNovo" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+          <option value="" disabled selected>Selecione o dia</option>
+          <option value="0">Domingo</option><option value="1">Segunda</option><option value="2">Terça</option>
+          <option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div class="field" style="flex:1"><label>Início</label><input type="time" id="editDispInicioNovo" value="09:00"></div>
+        <div class="field" style="flex:1"><label>Fim</label><input type="time" id="editDispFimNovo" value="20:00"></div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div class="field" style="flex:1"><label>Pausa (início)</label><input type="time" id="editDispPausaInicioNovo"></div>
+        <div class="field" style="flex:1"><label>Pausa (fim)</label><input type="time" id="editDispPausaFimNovo"></div>
+      </div>
+      <button class="btn btn-outline btn-small" id="btnAddDispNoModal">Adicionar</button>
+    </details>
+
+    <button class="link-btn" id="btnCloseEditBarbeiro" style="width:100%;margin-top:20px">Fechar</button>
+  </div>
+</div>
+
+<!-- Modal editar disponibilidade individual -->
+<div class="modal-backdrop hidden" id="editDispModal">
+  <div class="modal">
+    <h3 id="editDispTitulo">Editar horário</h3>
+    <div class="field">
+      <label>Dia da semana</label>
+      <select id="editDispDia" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+        <option value="0">Domingo</option><option value="1">Segunda</option><option value="2">Terça</option>
+        <option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1"><label>Início</label><input type="time" id="editDispInicio"></div>
+      <div class="field" style="flex:1"><label>Fim</label><input type="time" id="editDispFim"></div>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1"><label>Pausa (início)</label><input type="time" id="editDispPausaInicio"></div>
+      <div class="field" style="flex:1"><label>Pausa (fim)</label><input type="time" id="editDispPausaFim"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnConfirmarEditDisp">Confirmar alterações</button>
+    <button class="link-btn" id="btnCancelEditDisp" style="width:100%">Cancelar</button>
+  </div>
+</div>
 
 <footer>PAINEL ADMINISTRATIVO · RZR BARBER SHOP</footer>
 <div id="toast"></div>
@@ -156,6 +239,9 @@ document.getElementById("btnLogin").onclick = async () => {
     toast(`Bem-vindo, ${data.nome}`);
   } catch (e) { toast(e.message, true); }
 };
+document.getElementById("loginSenha").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("btnLogin").click();
+});
 
 async function loadAll() {
   await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos(), loadBloqueios()]);
@@ -205,11 +291,19 @@ async function loadBarbeiros() {
     document.getElementById("barberList").innerHTML = barbeirosCache.map(b => `
       <div class="appt">
         <div class="appt-info"><div class="name">${b.nome}</div><div class="meta">${b.telefone || "—"}</div></div>
-        <span class="badge ${b.ativo ? "badge-confirmado" : "badge-cancelado"}">${b.ativo ? "Ativo" : "Inativo"}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${b.ativo ? "badge-confirmado" : "badge-cancelado"}">${b.ativo ? "Ativo" : "Inativo"}</span>
+          <button class="btn btn-outline btn-small" data-id="${b.id}">Editar</button>
+        </div>
       </div>`).join("");
 
+    document.getElementById("barberList").querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = () => abrirEdicaoBarbeiro(barbeirosCache.find(b => b.id == btn.dataset.id));
+    });
+
     const sel = document.getElementById("dispBarbeiro");
-    sel.innerHTML = barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+    sel.innerHTML = `<option value="" disabled selected>Selecione o barbeiro</option>` +
+      barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
 
     const selBloqueio = document.getElementById("bloqueioBarbeiro");
     selBloqueio.innerHTML = `<option value="">Todos os barbeiros (feriado)</option>` +
@@ -231,6 +325,8 @@ document.getElementById("btnAddBarber").onclick = async () => {
 };
 
 // ---------- Serviços ----------
+let servicoEditandoId = null;
+
 async function loadServicos() {
   try {
     const servicos = await api("/api/servicos");
@@ -240,9 +336,47 @@ async function loadServicos() {
           <div class="name">${s.nome}</div>
           <div class="meta">${s.duracaoMinutos} min · ${formatMoney(s.preco)}${s.antecedenciaMinimaMinutos > 0 ? ` · antecedência: ${s.antecedenciaMinimaMinutos} min` : ""}</div>
         </div>
+        <button class="btn btn-outline btn-small" data-id="${s.id}">Editar</button>
       </div>`).join("");
+
+    document.getElementById("serviceList").querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = () => {
+        const servico = servicos.find(s => s.id == btn.dataset.id);
+        abrirEdicaoServico(servico);
+      };
+    });
   } catch (e) { toast(e.message, true); }
 }
+
+function abrirEdicaoServico(servico) {
+  servicoEditandoId = servico.id;
+  document.getElementById("editServicoNome").value = servico.nome;
+  document.getElementById("editServicoDuracao").value = servico.duracaoMinutos;
+  document.getElementById("editServicoPreco").value = servico.preco;
+  document.getElementById("editServicoAntecedencia").value = servico.antecedenciaMinimaMinutos;
+  document.getElementById("editServicoModal").classList.remove("hidden");
+}
+
+document.getElementById("btnCancelEditServico").onclick = () => {
+  document.getElementById("editServicoModal").classList.add("hidden");
+};
+
+document.getElementById("btnSalvarServico").onclick = async () => {
+  const nome = document.getElementById("editServicoNome").value.trim();
+  const duracaoMinutos = parseInt(document.getElementById("editServicoDuracao").value);
+  const preco = parseFloat(document.getElementById("editServicoPreco").value);
+  const antecedenciaMinimaMinutos = parseInt(document.getElementById("editServicoAntecedencia").value) || 0;
+  if (!nome || !duracaoMinutos || !preco) return toast("Preencha todos os campos", true);
+  try {
+    await api(`/api/servicos/${servicoEditandoId}`, {
+      method: "PUT",
+      body: JSON.stringify({ nome, duracaoMinutos, preco, antecedenciaMinimaMinutos })
+    });
+    toast("Serviço atualizado");
+    document.getElementById("editServicoModal").classList.add("hidden");
+    loadServicos();
+  } catch (e) { toast(e.message, true); }
+};
 
 document.getElementById("btnAddServico").onclick = async () => {
   const nome = document.getElementById("newServicoNome").value.trim();
@@ -265,6 +399,10 @@ document.getElementById("btnAddServico").onclick = async () => {
 async function loadBloqueios() {
   try {
     const bloqueios = await api("/api/bloqueios");
+    if (bloqueioEditandoId && !bloqueios.some(b => b.id === bloqueioEditandoId)) {
+      bloqueioEditandoId = null;
+      document.getElementById("btnAddBloqueio").textContent = "Adicionar";
+    }
     document.getElementById("bloqueioList").innerHTML = bloqueios.length
       ? bloqueios.map(b => `
         <div class="appt">
@@ -272,11 +410,14 @@ async function loadBloqueios() {
             <div class="name">${b.barbeiroNome || "Todos os barbeiros (feriado)"}</div>
             <div class="meta">${formatDateOnly(b.data)}${b.motivo ? " · " + b.motivo : ""}</div>
           </div>
-          <button class="btn btn-danger btn-small" data-id="${b.id}">Remover</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-small" data-action="edit" data-id="${b.id}">Editar</button>
+            <button class="btn btn-danger btn-small" data-action="delete" data-id="${b.id}">Remover</button>
+          </div>
         </div>`).join("")
       : `<div class="empty"><div class="display">—</div>Nenhum bloqueio cadastrado.</div>`;
 
-    document.getElementById("bloqueioList").querySelectorAll("button[data-id]").forEach(btn => {
+    document.getElementById("bloqueioList").querySelectorAll("button[data-action='delete']").forEach(btn => {
       btn.onclick = async () => {
         if (!confirm("Remover este bloqueio?")) return;
         try {
@@ -284,6 +425,13 @@ async function loadBloqueios() {
           toast("Bloqueio removido");
           loadBloqueios();
         } catch (e) { toast(e.message, true); }
+      };
+    });
+
+    document.getElementById("bloqueioList").querySelectorAll("button[data-action='edit']").forEach(btn => {
+      btn.onclick = () => {
+        const bloqueio = bloqueios.find(b => b.id == btn.dataset.id);
+        abrirEdicaoBloqueio(bloqueio);
       };
     });
   } catch (e) { toast(e.message, true); }
@@ -294,16 +442,49 @@ document.getElementById("btnAddBloqueio").onclick = async () => {
   const data = document.getElementById("bloqueioData").value;
   const motivo = document.getElementById("bloqueioMotivo").value.trim() || null;
   if (!data) return toast("Escolha uma data", true);
+
+  const payload = { barbeiroId: barbeiroId ? parseInt(barbeiroId) : null, data, motivo };
+
   try {
-    await api("/api/bloqueios", {
-      method: "POST",
-      body: JSON.stringify({ barbeiroId: barbeiroId ? parseInt(barbeiroId) : null, data, motivo })
-    });
-    toast("Bloqueio cadastrado");
+    if (bloqueioEditandoId) {
+      try {
+        await api(`/api/bloqueios/${bloqueioEditandoId}`, { method: "DELETE" });
+      } catch (deleteError) {
+        // Já foi removido antes (ex: clicou em Remover separadamente) — segue o fluxo normalmente
+      }
+      bloqueioEditandoId = null;
+      document.getElementById("btnAddBloqueio").textContent = "Adicionar";
+    }
+
+    await api("/api/bloqueios", { method: "POST", body: JSON.stringify(payload) });
+    toast(bloqueioEditandoId ? "Bloqueio atualizado" : "Bloqueio cadastrado");
+    document.getElementById("bloqueioBarbeiro").value = "";
     document.getElementById("bloqueioData").value = "";
     document.getElementById("bloqueioMotivo").value = "";
     loadBloqueios();
   } catch (e) { toast(e.message, true); }
+};
+
+let bloqueioEditandoId = null;
+
+function abrirEdicaoBloqueio(bloqueio) {
+  bloqueioEditandoId = bloqueio.id;
+  document.getElementById("bloqueioBarbeiro").value = bloqueio.barbeiroId || "";
+  document.getElementById("bloqueioData").value = bloqueio.data;
+  document.getElementById("bloqueioMotivo").value = bloqueio.motivo || "";
+  document.getElementById("btnAddBloqueio").textContent = "Salvar alterações";
+  document.getElementById("btnCancelEditBloqueio").classList.remove("hidden");
+  document.querySelector("#bloqueioBarbeiro").closest("details").open = true;
+  document.getElementById("bloqueioBarbeiro").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+document.getElementById("btnCancelEditBloqueio").onclick = () => {
+  bloqueioEditandoId = null;
+  document.getElementById("btnAddBloqueio").textContent = "Adicionar";
+  document.getElementById("btnCancelEditBloqueio").classList.add("hidden");
+  document.getElementById("bloqueioBarbeiro").value = "";
+  document.getElementById("bloqueioData").value = "";
+  document.getElementById("bloqueioMotivo").value = "";
 };
 
 // ---------- Disponibilidade ----------
@@ -326,9 +507,183 @@ document.getElementById("btnAddDisp").onclick = async () => {
   } catch (e) { toast(e.message, true); }
 };
 
+// ---------- Editar barbeiro ----------
+let barbeiroEditandoId = null;
+
+async function abrirEdicaoBarbeiro(barbeiro) {
+  barbeiroEditandoId = barbeiro.id;
+  document.getElementById("editBarbeiroNome").value = barbeiro.nome;
+  document.getElementById("editBarbeiroTelefone").value = barbeiro.telefone || "";
+  document.getElementById("editBarbeiroModal").classList.remove("hidden");
+  await carregarDisponibilidadesDoModal();
+}
+
+let disponibilidadesCache = [];
+
+async function carregarDisponibilidadesDoModal() {
+  try {
+    disponibilidadesCache = await api(`/api/barbeiros/${barbeiroEditandoId}/disponibilidades`);
+    const diasNomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+    document.getElementById("editDisponibilidadeList").innerHTML = disponibilidadesCache.length
+      ? disponibilidadesCache.map(d => `
+        <div class="appt" data-disp-id="${d.id}">
+          <div class="appt-info">
+            <div class="name">${diasNomes[d.diaSemana]}</div>
+            <div class="meta">
+              ${d.horaInicio.substring(0,5)} às ${d.horaFim.substring(0,5)}
+              ${d.pausaInicio ? ` · pausa ${d.pausaInicio.substring(0,5)}-${d.pausaFim.substring(0,5)}` : ""}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-small" data-action="edit" data-id="${d.id}">Editar</button>
+            <button class="btn btn-danger btn-small" data-action="delete" data-id="${d.id}">Remover</button>
+          </div>
+        </div>`).join("")
+      : `<div class="empty" style="padding:20px"><div class="display">—</div>Nenhum horário cadastrado.</div>`;
+
+    document.getElementById("editDisponibilidadeList").querySelectorAll("button[data-action='delete']").forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm("Remover este horário?")) return;
+        try {
+          await api(`/api/barbeiros/${barbeiroEditandoId}/disponibilidades/${btn.dataset.id}`, { method: "DELETE" });
+          toast("Horário removido");
+          carregarDisponibilidadesDoModal();
+        } catch (e) { toast(e.message, true); }
+      };
+    });
+
+    document.getElementById("editDisponibilidadeList").querySelectorAll("button[data-action='edit']").forEach(btn => {
+      btn.onclick = () => {
+        const disp = disponibilidadesCache.find(d => d.id == btn.dataset.id);
+        abrirEdicaoDeUmaDisponibilidade(disp);
+      };
+    });
+  } catch (e) { toast(e.message, true); }
+}
+
+document.getElementById("btnSalvarBarbeiro").onclick = async () => {
+  const nome = document.getElementById("editBarbeiroNome").value.trim();
+  const telefone = document.getElementById("editBarbeiroTelefone").value.trim();
+  if (!nome) return toast("Informe o nome", true);
+  try {
+    await api(`/api/barbeiros/${barbeiroEditandoId}`, { method: "PUT", body: JSON.stringify({ nome, telefone }) });
+    toast("Dados do barbeiro atualizados");
+    loadBarbeiros();
+  } catch (e) { toast(e.message, true); }
+};
+
+document.getElementById("btnCloseEditBarbeiro").onclick = () => {
+  document.getElementById("editBarbeiroModal").classList.add("hidden");
+};
+
+document.getElementById("btnAddDispNoModal").onclick = async () => {
+  const diaSemana = parseInt(document.getElementById("editDispDiaNovo").value);
+  const horaInicio = document.getElementById("editDispInicioNovo").value + ":00";
+  const horaFim = document.getElementById("editDispFimNovo").value + ":00";
+  const pausaInicioVal = document.getElementById("editDispPausaInicioNovo").value;
+  const pausaFimVal = document.getElementById("editDispPausaFimNovo").value;
+  const pausaInicio = pausaInicioVal ? pausaInicioVal + ":00" : null;
+  const pausaFim = pausaFimVal ? pausaFimVal + ":00" : null;
+  if (isNaN(diaSemana)) return toast("Selecione o dia da semana", true);
+  try {
+    await api(`/api/barbeiros/${barbeiroEditandoId}/disponibilidades`, {
+      method: "POST",
+      body: JSON.stringify({ diaSemana, horaInicio, horaFim, pausaInicio, pausaFim })
+    });
+    toast("Horário adicionado");
+    carregarDisponibilidadesDoModal();
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------- Editar uma disponibilidade específica (modal simples via prompt) ----------
+let dispEditandoId = null;
+
+function abrirEdicaoDeUmaDisponibilidade(disp) {
+  dispEditandoId = disp.id;
+  document.getElementById("editDispDia").value = disp.diaSemana;
+  document.getElementById("editDispInicio").value = disp.horaInicio.substring(0, 5);
+  document.getElementById("editDispFim").value = disp.horaFim.substring(0, 5);
+  document.getElementById("editDispPausaInicio").value = disp.pausaInicio ? disp.pausaInicio.substring(0, 5) : "";
+  document.getElementById("editDispPausaFim").value = disp.pausaFim ? disp.pausaFim.substring(0, 5) : "";
+  document.getElementById("btnConfirmarEditDisp").textContent = "Confirmar alterações";
+  document.getElementById("editDispModal").classList.remove("hidden");
+}
+
+document.getElementById("btnCancelEditDisp").onclick = () => {
+  document.getElementById("editDispModal").classList.add("hidden");
+};
+
+document.getElementById("editDispDia").addEventListener("change", (e) => {
+  const novoDia = parseInt(e.target.value);
+  const dispDoNovoDia = disponibilidadesCache.find(d => d.diaSemana === novoDia);
+
+  if (dispDoNovoDia) {
+    // Já existe horário nesse dia — carrega os dados dele
+    dispEditandoId = dispDoNovoDia.id;
+    document.getElementById("editDispInicio").value = dispDoNovoDia.horaInicio.substring(0, 5);
+    document.getElementById("editDispFim").value = dispDoNovoDia.horaFim.substring(0, 5);
+    document.getElementById("editDispPausaInicio").value = dispDoNovoDia.pausaInicio ? dispDoNovoDia.pausaInicio.substring(0, 5) : "";
+    document.getElementById("editDispPausaFim").value = dispDoNovoDia.pausaFim ? dispDoNovoDia.pausaFim.substring(0, 5) : "";
+  } else {
+    // Não existe horário nesse dia ainda — limpa os campos, vira criação
+    dispEditandoId = null;
+    document.getElementById("editDispInicio").value = "";
+    document.getElementById("editDispFim").value = "";
+    document.getElementById("editDispPausaInicio").value = "";
+    document.getElementById("editDispPausaFim").value = "";
+    document.getElementById("btnConfirmarEditDisp").textContent = "Cadastrar novo horário";
+  }
+});
+
+document.getElementById("btnConfirmarEditDisp").onclick = async () => {
+  const diaSemana = parseInt(document.getElementById("editDispDia").value);
+  const horaInicio = document.getElementById("editDispInicio").value;
+  const horaFim = document.getElementById("editDispFim").value;
+  const pausaInicioVal = document.getElementById("editDispPausaInicio").value;
+  const pausaFimVal = document.getElementById("editDispPausaFim").value;
+
+  if (!horaInicio || !horaFim) return toast("Preencha início e fim", true);
+
+  const payload = {
+    diaSemana,
+    horaInicio: horaInicio + ":00",
+    horaFim: horaFim + ":00",
+    pausaInicio: pausaInicioVal ? pausaInicioVal + ":00" : null,
+    pausaFim: pausaFimVal ? pausaFimVal + ":00" : null
+  };
+
+  try {
+    if (dispEditandoId) {
+      await api(`/api/barbeiros/${barbeiroEditandoId}/disponibilidades/${dispEditandoId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+      toast("Horário atualizado");
+    } else {
+      await api(`/api/barbeiros/${barbeiroEditandoId}/disponibilidades`, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      toast("Horário cadastrado");
+    }
+    document.getElementById("editDispModal").classList.add("hidden");
+    carregarDisponibilidadesDoModal();
+  } catch (e) { toast(e.message, true); }
+};
+
+document.querySelectorAll(".modal-backdrop").forEach(backdrop => {
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) {
+      backdrop.classList.add("hidden");
+    }
+  });
+});
+
 // ---------- Init ----------
 renderNav();
 checkAccess();
+setupPasswordToggles()
 </script>
 </body>
 </html>

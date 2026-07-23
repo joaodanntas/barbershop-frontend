@@ -259,18 +259,24 @@ select { font-family: 'Work Sans', sans-serif; }
   position: fixed;
   bottom: 56px;
   left: 50%;
-  transform: translateX(-50%) translateY(120%);
+  transform: translateX(-50%) translateY(20px);
+  opacity: 0;
+  pointer-events: none;
   background: var(--ink);
   color: var(--white);
   padding: 14px 22px;
   border-radius: 2px;
   font-size: 14px;
   font-weight: 500;
-  transition: transform 0.25s ease;
-  z-index: 100;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  z-index: 300;
   border-left: 3px solid var(--silver);
 }
-#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
 #toast.error { border-left-color: #8A5A52; }
 
 /* ---------- Modal ---------- */
@@ -288,6 +294,8 @@ select { font-family: 'Work Sans', sans-serif; }
   max-width: 380px;
   width: 100%;
   border: 1px solid var(--line);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 .modal h3 { font-size: 28px; margin-bottom: 18px; font-style: italic; }
 .hidden { display: none !important; }
@@ -313,6 +321,23 @@ select { font-family: 'Work Sans', sans-serif; }
   font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: underline;
 }
 
+/* ---------- Password toggle ---------- */
+.password-wrapper { position: relative; }
+.password-wrapper input { padding-right: 42px; }
+.toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+  color: var(--silver-dim);
+}
+.toggle-password:hover { color: var(--ink); }
+
 footer {
   text-align: center;
   padding: 32px 20px;
@@ -328,3 +353,4 @@ footer {
   .card { padding: 24px; }
   .steps { flex-wrap: wrap; }
 }
+

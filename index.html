@@ -79,7 +79,13 @@
     <div id="loginForm">
       <h3>Entrar</h3>
       <div class="field"><label>Email</label><input type="email" id="loginEmail"></div>
-      <div class="field"><label>Senha</label><input type="password" id="loginSenha"></div>
+      <div class="field">
+        <label>Senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="loginSenha">
+          <button type="button" class="toggle-password" data-target="loginSenha">👁</button>
+        </div>
+      </div>
       <button class="btn btn-primary" style="width:100%" id="btnLogin">Entrar</button>
     </div>
 
@@ -88,7 +94,20 @@
       <div class="field"><label>Nome</label><input type="text" id="cadNome"></div>
       <div class="field"><label>Email</label><input type="email" id="cadEmail"></div>
       <div class="field"><label>Telefone</label><input type="tel" id="cadTelefone"></div>
-      <div class="field"><label>Senha</label><input type="password" id="cadSenha"></div>
+      <div class="field">
+        <label>Senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="cadSenha">
+          <button type="button" class="toggle-password" data-target="cadSenha">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirmar senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="cadSenhaConfirmar">
+          <button type="button" class="toggle-password" data-target="cadSenhaConfirmar">👁</button>
+        </div>
+      </div>
       <button class="btn btn-primary" style="width:100%" id="btnCadastro">Criar conta</button>
     </div>
 
@@ -103,7 +122,7 @@
   <div class="modal">
     <h3>Confirmar reserva</h3>
     <p id="confirmSummary" style="margin-bottom:20px;color:var(--muted);font-size:15px"></p>
-    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnConfirmBooking">Confirmar agendamento</button>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnConfirmBooking">Solicitar agendamento</button>
     <button class="link-btn" id="btnCancelConfirm" style="width:100%">Voltar</button>
   </div>
 </div>
@@ -159,13 +178,18 @@ document.getElementById("btnLogin").onclick = async () => {
     toast(`Bem-vindo, ${data.nome.split(" ")[0]}!`);
   } catch (e) { toast(e.message, true); }
 };
+document.getElementById("loginSenha").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("btnLogin").click();
+});
 
 document.getElementById("btnCadastro").onclick = async () => {
   const nome = document.getElementById("cadNome").value.trim();
   const email = document.getElementById("cadEmail").value.trim();
   const telefone = document.getElementById("cadTelefone").value.trim();
   const senha = document.getElementById("cadSenha").value;
+  const senhaConfirmar = document.getElementById("cadSenhaConfirmar").value;
   if (!nome || !email || !senha) return toast("Preencha os campos obrigatórios", true);
+  if (senha !== senhaConfirmar) return toast("As senhas não coincidem", true);
   try {
     const data = await api("/api/auth/cadastro", { method: "POST", body: JSON.stringify({ nome, email, senha, telefone }) });
     saveSession(data.token, data.nome, data.email, data.perfil);
@@ -173,7 +197,9 @@ document.getElementById("btnCadastro").onclick = async () => {
     toast(`Conta criada! Bem-vindo, ${data.nome.split(" ")[0]}!`);
   } catch (e) { toast(e.message, true); }
 };
-
+document.getElementById("cadSenha").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("btnCadastro").click();
+});
 // ---------- Fluxo de agendamento ----------
 async function loadBarbeiros() {
   try {
@@ -245,7 +271,9 @@ function selectSlot(el) {
 }
 
 function markStep(fromIdx, toIdx) {
-  document.getElementById(`step${fromIdx}`).classList.add("done");
+  const stepFrom = document.getElementById(`step${fromIdx}`);
+  stepFrom.classList.remove("active");
+  stepFrom.classList.add("done");
   document.getElementById(`step${toIdx}`).classList.add("active");
 }
 
@@ -332,6 +360,7 @@ async function showMyAppointments() {
 // ---------- Init ----------
 renderNav();
 loadBarbeiros();
+setupPasswordToggles();
 </script>
 </body>
 </html>

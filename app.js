@@ -38,14 +38,30 @@ async function api(path, options = {}) {
 }
 
 // ===== Toast =====
+let toastToken = 0;
 function toast(message, isError = false) {
   const el = document.getElementById("toast");
   if (!el) return;
+  const meuToken = ++toastToken;
   el.textContent = message;
   el.classList.toggle("error", isError);
   el.classList.add("show");
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+  setTimeout(() => {
+    if (meuToken === toastToken) el.classList.remove("show");
+  }, 2000);
+}
+
+// ===== Password Toggle =====
+function setupPasswordToggles() {
+  document.querySelectorAll(".toggle-password").forEach(btn => {
+    btn.onclick = () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      btn.textContent = isPassword ? "🙈" : "👁";
+    };
+  });
 }
 
 // ===== Formatters =====
