@@ -56,10 +56,12 @@ function setupPasswordToggles() {
   document.querySelectorAll(".toggle-password").forEach(btn => {
     btn.onclick = () => {
       const input = document.getElementById(btn.dataset.target);
-      if (!input) return;
+      const img = btn.querySelector("img");
+      if (!input || !img) return;
       const isPassword = input.type === "password";
       input.type = isPassword ? "text" : "password";
-      btn.textContent = isPassword ? "🙈" : "👁";
+      img.src = isPassword ? "assets/notsee-eye.svg" : "assets/see-eye.svg";
+      img.alt = isPassword ? "Ocultar senha" : "Mostrar senha";
     };
   });
 }
