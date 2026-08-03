@@ -89,6 +89,9 @@
         </div>
       </div>
       <button class="btn btn-primary" style="width:100%" id="btnLogin">Entrar</button>
+      <div style="text-align:center;margin-top:14px">
+        <button class="link-btn" id="btnEsqueciSenha" style="font-size:12px">Esqueci minha senha</button>
+      </div>
     </div>
 
     <div id="cadastroForm" class="hidden">
@@ -187,6 +190,15 @@ document.getElementById("btnLogin").onclick = async () => {
 document.getElementById("loginSenha").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("btnLogin").click();
 });
+
+document.getElementById("btnEsqueciSenha").onclick = async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) return toast("Digite seu e-mail no campo acima primeiro", true);
+  try {
+    const data = await api("/api/auth/esqueci-senha", { method: "POST", body: JSON.stringify({ email }) });
+    toast(data.mensagem);
+  } catch (e) { toast(e.message, true); }
+};
 
 document.getElementById("btnCadastro").onclick = async () => {
   const nome = document.getElementById("cadNome").value.trim();

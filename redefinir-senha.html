@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redefinir senha · RZR Barber Shop</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero" style="padding-bottom:32px">
+  <nav class="hero-nav" style="margin-bottom:0">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="RZR Barber Shop">
+    </div>
+  </nav>
+</header>
+<div class="stripes"></div>
+
+<main>
+  <section class="card" style="max-width:420px">
+    <div class="section-label">Sua conta</div>
+    <h2 class="section-title">Redefinir senha</h2>
+
+    <div id="formRedefinir">
+      <div class="field">
+        <label>Nova senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="novaSenha">
+          <button type="button" class="toggle-password" data-target="novaSenha">
+            <img src="assets/see-eye.svg" alt="Mostrar senha">
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirmar nova senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="novaSenhaConfirmar">
+          <button type="button" class="toggle-password" data-target="novaSenhaConfirmar">
+            <img src="assets/see-eye.svg" alt="Mostrar senha">
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" id="btnRedefinir">Salvar nova senha</button>
+    </div>
+
+    <div id="linkInvalido" class="hidden empty">
+      <div class="display">—</div>
+      Link inválido ou expirado. Solicite uma nova redefinição na tela de login.
+    </div>
+
+    <div id="sucessoRedefinir" class="hidden empty">
+      <div class="display">✓</div>
+      Senha redefinida com sucesso! Você já pode fazer login normalmente.
+    </div>
+  </section>
+</main>
+
+<footer>RZR BARBER SHOP · FRANCA-SP</footer>
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const token = params.get("token");
+
+if (!token) {
+  document.getElementById("formRedefinir").classList.add("hidden");
+  document.getElementById("linkInvalido").classList.remove("hidden");
+} else {
+  setupPasswordToggles();
+}
+
+document.getElementById("btnRedefinir")?.addEventListener("click", async () => {
+  const novaSenha = document.getElementById("novaSenha").value;
+  const novaSenhaConfirmar = document.getElementById("novaSenhaConfirmar").value;
+
+  if (!novaSenha || novaSenha.length < 6) return toast("A senha deve ter pelo menos 6 caracteres", true);
+  if (novaSenha !== novaSenhaConfirmar) return toast("As senhas não coincidem", true);
+
+  try {
+    await api("/api/auth/redefinir-senha", {
+      method: "POST",
+      body: JSON.stringify({ token, novaSenha })
+    });
+    document.getElementById("formRedefinir").classList.add("hidden");
+    document.getElementById("sucessoRedefinir").classList.remove("hidden");
+  } catch (e) {
+    toast(e.message, true);
+  }
+});
+</script>
+</body>
+</html>
