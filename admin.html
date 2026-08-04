@@ -42,6 +42,7 @@
       <div class="section-label">Agenda</div>
       <h2 class="section-title">Todos os agendamentos</h2>
       <div id="apptList"></div>
+      <div id="apptPaginacao" style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px"></div>
     </section>
 
     <section class="card">
@@ -253,15 +254,22 @@ async function loadAll() {
 }
 
 // ---------- Agendamentos ----------
-async function loadAppointments() {
+let paginaAtualAgendamentos = 1;
+
+async function loadAppointments(pagina = 1) {
   try {
-    const appts = await api("/api/agendamentos/admin/todos");
+    const resultado = await api(`/api/agendamentos/admin/todos?pagina=${pagina}&tamanhoPagina=15`);
+    const { itens, paginaAtual, totalPaginas, totalItens } = resultado;
+    paginaAtualAgendamentos = paginaAtual;
+
     const list = document.getElementById("apptList");
-    if (!appts.length) {
+    if (!itens.length) {
       list.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum agendamento ainda.</div>`;
+      document.getElementById("apptPaginacao").innerHTML = "";
       return;
     }
-    list.innerHTML = appts.map(a => `
+
+    list.innerHTML = itens.map(a => `
       <div class="appt">
         <div class="appt-info">
           <div class="name">${a.clienteNome} · ${a.servicoNome}</div>
@@ -282,10 +290,24 @@ async function loadAppointments() {
             body: JSON.stringify({ status: btn.dataset.status })
           });
           toast("Status atualizado");
-          loadAppointments();
+          loadAppointments(paginaAtualAgendamentos);
         } catch (e) { toast(e.message, true); }
       };
     });
+
+    // Controles de paginação
+    const paginacaoEl = document.getElementById("apptPaginacao");
+    if (totalPaginas <= 1) {
+      paginacaoEl.innerHTML = "";
+    } else {
+      paginacaoEl.innerHTML = `
+        <button class="btn btn-outline btn-small" id="btnPaginaAnterior" ${paginaAtual <= 1 ? "disabled" : ""}>← Anterior</button>
+        <span class="mono" style="font-size:13px;color:var(--silver-dim)">Página ${paginaAtual} de ${totalPaginas} · ${totalItens} agendamentos</span>
+        <button class="btn btn-outline btn-small" id="btnProximaPagina" ${paginaAtual >= totalPaginas ? "disabled" : ""}>Próxima →</button>
+      `;
+      document.getElementById("btnPaginaAnterior").onclick = () => loadAppointments(paginaAtual - 1);
+      document.getElementById("btnProximaPagina").onclick = () => loadAppointments(paginaAtual + 1);
+    }
   } catch (e) { toast(e.message, true); }
 }
 
