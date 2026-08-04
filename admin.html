@@ -272,8 +272,8 @@ async function loadAppointments(pagina = 1) {
     list.innerHTML = itens.map(a => `
       <div class="appt">
         <div class="appt-info">
-          <div class="name">${a.clienteNome} · ${a.servicoNome}</div>
-          <div class="meta">${a.barbeiroNome} · ${formatDateTime(a.dataHoraInicio)}</div>
+          <div class="name">${escapeHtml(a.clienteNome)} · ${escapeHtml(a.servicoNome)}</div>
+          <div class="meta">${escapeHtml(a.barbeiroNome)} · ${formatDateTime(a.dataHoraInicio)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status)}</span>
@@ -317,7 +317,7 @@ async function loadBarbeiros() {
     barbeirosCache = await api("/api/barbeiros/todos");
     document.getElementById("barberList").innerHTML = barbeirosCache.map(b => `
       <div class="appt">
-        <div class="appt-info"><div class="name">${b.nome}</div><div class="meta">${b.telefone || "—"}</div></div>
+        <div class="appt-info"><div class="name">${escapeHtml(b.nome)}</div><div class="meta">${escapeHtml(b.telefone) || "—"}</div></div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="badge ${b.ativo ? "badge-confirmado" : "badge-cancelado"}">${b.ativo ? "Ativo" : "Inativo"}</span>
           <button class="btn btn-outline btn-small" data-id="${b.id}">Editar</button>
@@ -360,7 +360,7 @@ async function loadServicos() {
     document.getElementById("serviceList").innerHTML = servicos.map(s => `
       <div class="appt">
         <div class="appt-info">
-          <div class="name">${s.nome}</div>
+          <div class="appt-info"><div class="name">${escapeHtml(s.nome)}</div>
           <div class="meta">${s.duracaoMinutos} min · ${formatMoney(s.preco)}${s.antecedenciaMinimaMinutos > 0 ? ` · antecedência: ${s.antecedenciaMinimaMinutos} min` : ""}</div>
         </div>
         <button class="btn btn-outline btn-small" data-id="${s.id}">Editar</button>
@@ -434,8 +434,8 @@ async function loadBloqueios() {
       ? bloqueios.map(b => `
         <div class="appt">
           <div class="appt-info">
-            <div class="name">${b.barbeiroNome || "Todos os barbeiros (feriado)"}</div>
-            <div class="meta">${formatDateOnly(b.data)}${b.motivo ? " · " + b.motivo : ""}</div>
+            <div class="name">${b.barbeiroNome ? escapeHtml(b.barbeiroNome) : "Todos os barbeiros (feriado)"}</div>
+        <div class="meta">${formatDateOnly(b.data)}${b.motivo ? " · " + escapeHtml(b.motivo) : ""}</div>
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-outline btn-small" data-action="edit" data-id="${b.id}">Editar</button>

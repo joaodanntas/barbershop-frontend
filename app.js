@@ -17,6 +17,14 @@ function clearSession() {
 }
 function isLoggedIn() { return !!getToken(); }
 
+// ===== Segurança =====
+function escapeHtml(texto) {
+  if (texto === null || texto === undefined) return "";
+  const div = document.createElement("div");
+  div.textContent = String(texto);
+  return div.innerHTML;
+}
+
 // ===== Fetch wrapper =====
 async function api(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };

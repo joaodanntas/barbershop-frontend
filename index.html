@@ -153,7 +153,7 @@ function renderNav() {
   const user = getUser();
   if (user) {
     nav.innerHTML = `
-      <span style="color:var(--cream);font-size:14px">Olá, ${user.nome.split(" ")[0]}</span>
+      <span style="color:var(--cream);font-size:14px">Olá, ${escapeHtml(user.nome.split(" ")[0])}</span>
       <button class="btn btn-ghost btn-small" id="btnMyAppts">Meus agendamentos</button>
       <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>
     `;
@@ -229,8 +229,8 @@ async function loadBarbeiros() {
     const grid = document.getElementById("barberGrid");
     grid.innerHTML = barbeiros.map(b => `
       <div class="choice-card" data-id="${b.id}">
-        <div class="name">${b.nome}</div>
-        <div class="meta">${b.telefone || "Barbeiro"}</div>
+        <div class="name">${escapeHtml(b.nome)}</div>
+        <div class="meta">${escapeHtml(b.telefone) || "Barbeiro"}</div>
       </div>`).join("");
     grid.querySelectorAll(".choice-card").forEach(el => el.onclick = () => selectBarbeiro(el));
   } catch (e) { toast(e.message, true); }
@@ -250,7 +250,7 @@ async function loadServicos() {
     const grid = document.getElementById("serviceGrid");
     grid.innerHTML = servicos.map(s => `
       <div class="choice-card" data-id="${s.id}">
-        <div class="name">${s.nome}</div>
+        <div class="name">${escapeHtml(s.nome)}</div>
         <div class="meta">${s.duracaoMinutos} min · ${formatMoney(s.preco)}</div>
       </div>`).join("");
     grid.querySelectorAll(".choice-card").forEach(el => el.onclick = () => selectServico(el));
@@ -306,8 +306,7 @@ function openConfirmModal() {
     openAuthModal();
     return;
   }
-  const resumo = `${selected.barbeiro.nome} · ${selected.servico.nome} · ${formatDateTime(selected.slot)}`;
-  document.getElementById("confirmSummary").textContent = resumo;
+  const resumo = `${escapeHtml(selected.barbeiro.nome)} · ${escapeHtml(selected.servico.nome)} · ${formatDateTime(selected.slot)}`;  document.getElementById("confirmSummary").textContent = resumo;
   document.getElementById("confirmModal").classList.remove("hidden");
 }
 document.getElementById("btnCancelConfirm").onclick = () => document.getElementById("confirmModal").classList.add("hidden");
@@ -357,7 +356,7 @@ async function showMyAppointments() {
     list.innerHTML = appts.map(a => `
       <div class="appt">
         <div class="appt-info">
-          <div class="name">${a.servicoNome} com ${a.barbeiroNome}</div>
+          <div class="name">${escapeHtml(a.servicoNome)} com ${escapeHtml(a.barbeiroNome)}</div>
           <div class="meta">${formatDateTime(a.dataHoraInicio)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
