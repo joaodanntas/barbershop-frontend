@@ -140,6 +140,36 @@
   </div>
 </div>
 
+<!-- Modal minha conta -->
+<div class="modal-backdrop hidden" id="accountModal">
+  <div class="modal">
+    <h3>Minha conta</h3>
+    <div class="field"><label>Nome</label><input type="text" id="accNome"></div>
+    <div class="field"><label>Email</label><input type="email" id="accEmail"></div>
+    <div class="field"><label>Telefone</label><input type="tel" id="accTelefone"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" id="btnSalvarPerfil">Salvar alterações</button>
+
+    <div class="stripes" style="margin:24px 0"></div>
+
+    <h3 style="font-size:20px;color:#8A5A52">Excluir minha conta</h3>
+    <p style="color:var(--silver-dim);font-size:13px;margin:8px 0 14px">
+      Isso remove seus dados pessoais (nome, e-mail, telefone) permanentemente. Seu histórico de agendamentos é mantido de forma anônima, como exige a lei. Essa ação não pode ser desfeita.
+    </p>
+    <div class="field">
+      <label>Confirme sua senha</label>
+      <div class="password-wrapper">
+        <input type="password" id="accSenhaExcluir">
+        <button type="button" class="toggle-password" data-target="accSenhaExcluir">
+          <img src="assets/see-eye.svg" alt="Mostrar senha">
+        </button>
+      </div>
+    </div>
+    <button class="btn btn-danger" style="width:100%;margin-bottom:10px" id="btnExcluirConta">Excluir minha conta</button>
+
+    <button class="link-btn" id="btnCloseAccount" style="width:100%">Fechar</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="app.js"></script>
@@ -153,10 +183,11 @@ function renderNav() {
   const user = getUser();
   if (user) {
     nav.innerHTML = `
-      <span style="color:var(--cream);font-size:14px">Olá, ${escapeHtml(user.nome.split(" ")[0])}</span>
+      <button class="link-btn" id="btnAccount" style="color:var(--cream);text-decoration:none;font-size:14px">Olá, ${escapeHtml(user.nome.split(" ")[0])}</button>
       <button class="btn btn-ghost btn-small" id="btnMyAppts">Meus agendamentos</button>
       <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>
     `;
+    document.getElementById("btnAccount").onclick = openAccountModal;
     document.getElementById("btnMyAppts").onclick = showMyAppointments;
     document.getElementById("btnLogout").onclick = () => { clearSession(); renderNav(); toast("Sessão encerrada"); document.getElementById("myApptsCard").classList.add("hidden"); };
   } else {
@@ -222,6 +253,58 @@ document.getElementById("btnCadastro").onclick = async () => {
 document.getElementById("cadSenha").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("btnCadastro").click();
 });
+
+// ---------- Minha conta ----------
+function openAccountModal() {
+  document.getElementById("accountModal").classList.remove("hidden");
+  carregarMeusDados();
+}
+
+async function carregarMeusDados() {
+  try {
+    const dados = await api("/api/usuarios/me");
+    document.getElementById("accNome").value = dados.nome;
+    document.getElementById("accEmail").value = dados.email;
+    document.getElementById("accTelefone").value = dados.telefone || "";
+  } catch (e) { toast(e.message, true); }
+}
+
+document.getElementById("btnCloseAccount").onclick = () => {
+  document.getElementById("accountModal").classList.add("hidden");
+  document.getElementById("accSenhaExcluir").value = "";
+};
+
+document.getElementById("btnSalvarPerfil").onclick = async () => {
+  const nome = document.getElementById("accNome").value.trim();
+  const email = document.getElementById("accEmail").value.trim();
+  const telefone = document.getElementById("accTelefone").value.trim();
+  if (!nome) return toast("Informe o nome", true);
+  try {
+    const atualizado = await api("/api/usuarios/me", {
+      method: "PUT",
+      body: JSON.stringify({ nome, email, telefone })
+    });
+    const user = getUser();
+    saveSession(getToken(), atualizado.nome, atualizado.email, user.perfil);
+    renderNav();
+    toast("Dados atualizados");
+  } catch (e) { toast(e.message, true); }
+};
+
+document.getElementById("btnExcluirConta").onclick = async () => {
+  const senha = document.getElementById("accSenhaExcluir").value;
+  if (!senha) return toast("Digite sua senha para confirmar", true);
+  if (!confirm("Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.")) return;
+  try {
+    await api("/api/usuarios/me", { method: "DELETE", body: JSON.stringify({ senha }) });
+    toast("Conta excluída. Até logo!");
+    clearSession();
+    document.getElementById("accountModal").classList.add("hidden");
+    renderNav();
+    document.getElementById("myApptsCard").classList.add("hidden");
+  } catch (e) { toast(e.message, true); }
+};
+
 // ---------- Fluxo de agendamento ----------
 async function loadBarbeiros() {
   try {
