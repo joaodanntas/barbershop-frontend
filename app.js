@@ -16,6 +16,10 @@ function clearSession() {
   localStorage.removeItem("bs_user");
 }
 function isLoggedIn() { return !!getToken(); }
+function isClienteLogado() {
+  const user = getUser();
+  return !!(user && user.perfil === "Cliente");
+}
 
 // ===== Segurança =====
 function escapeHtml(texto) {
@@ -37,6 +41,16 @@ async function api(path, options = {}) {
 
   let data = null;
   try { data = await res.json(); } catch (e) { /* corpo vazio */ }
+
+  // Rotas de auth são públicas — um 401 nelas é "senha errada", não "sessão expirada"
+  const isRotaAuth = path.startsWith("/api/auth/");
+
+  if (res.status === 401 && token && !isRotaAuth) {
+    // Tínhamos um token e mesmo assim veio 401: o token expirou ou foi invalidado.
+    clearSession();
+    setTimeout(() => location.reload(), 1500);
+    throw new Error("Sua sessão expirou. Faça login novamente.");
+  }
 
   if (!res.ok) {
     const msg = (data && (data.erro || data.title)) || `Erro ${res.status}`;
