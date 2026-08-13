@@ -462,8 +462,7 @@ async function showMyAppointments() {
           <div class="meta">${formatDateTime(a.dataHoraInicio)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status)}</span>
-          ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}">Cancelar</button>` : ""}
+        <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status, a.canceladoPor)}</span>          ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}">Cancelar</button>` : ""}
         </div>
       </div>`).join("");
 

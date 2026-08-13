@@ -291,7 +291,7 @@ async function loadAppointments(pagina = 1) {
           <div class="meta">${escapeHtml(a.barbeiroNome)} · ${formatDateTime(a.dataHoraInicio)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status)}</span>
+          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status, a.canceladoPor)}</span>
           ${a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
           ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
         </div>

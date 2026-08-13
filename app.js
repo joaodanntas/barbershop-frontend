@@ -120,6 +120,9 @@ function formatDateOnly(dateStr) {
   const [, year, month, day] = match;
   return `${day}/${month}`;
 }
-function statusLabel(s) {
-  return { Pendente: "Pendente", Confirmado: "Confirmado", Cancelado: "Cancelado" }[s] || s;
+function statusLabel(status, canceladoPor) {
+  if (status === "Cancelado" && canceladoPor) {
+    return canceladoPor === "Barbeiro" ? "Cancelado pelo barbeiro" : "Cancelado pelo cliente";
+  }
+  return { Pendente: "Pendente", Confirmado: "Confirmado", Cancelado: "Cancelado" }[status] || status;
 }
