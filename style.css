@@ -320,6 +320,12 @@ select { font-family: 'Work Sans', sans-serif; }
   background: none; border: none; color: var(--ink);
   font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: underline;
 }
+#btnAccount {
+  text-decoration: none;
+}
+#btnAccount:hover {
+  text-decoration: underline;
+}
 
 /* ---------- Password toggle ---------- */
 .password-wrapper { position: relative; }

@@ -185,7 +185,7 @@ function renderNav() {
 
   if (user && user.perfil === "Cliente") {
     nav.innerHTML = `
-      <button class="link-btn" id="btnAccount" style="color:var(--cream);text-decoration:none;font-size:14px">Olá, ${escapeHtml(user.nome.split(" ")[0])}</button>
+      <button class="link-btn" id="btnAccount" title="Editar meus dados" style="color:var(--cream);font-size:14px">Olá, ${escapeHtml(user.nome.split(" ")[0])} ✎</button>
       <button class="btn btn-ghost btn-small" id="btnMyAppts">Meus agendamentos</button>
       <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>
     `;
