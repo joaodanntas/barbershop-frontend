@@ -193,13 +193,14 @@ input[type="date"], input[type="text"], input[type="email"], input[type="passwor
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 2px;
+  min-width: 0;
   width: 100%;
   background: var(--white);
   color: var(--ink);
 }
 input:focus { outline: none; border-color: var(--ink); }
 label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; margin-bottom: 6px; color: var(--silver-dim); text-transform: uppercase; }
-.field { margin-bottom: 16px; }
+.field { margin-bottom: 16px; min-width: 0;}
 select { font-family: 'Work Sans', sans-serif; }
 
 /* ---------- Ticket-stub time slots ---------- */
