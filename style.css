@@ -386,6 +386,31 @@ select { font-family: 'Work Sans', sans-serif; }
   overflow-wrap: break-word;
 }
 
+/* ---------- Seções colapsáveis ---------- */
+details.card > summary {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 28px;
+}
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::marker { content: ""; }
+details.card > summary::after {
+  content: "▸";
+  position: absolute;
+  right: 0;
+  top: 2px;
+  font-size: 18px;
+  color: var(--silver-dim);
+  transition: transform 0.15s ease;
+}
+details.card[open] > summary::after {
+  transform: rotate(90deg);
+}
+details.card .section-body {
+  margin-top: 22px;
+}
+
 footer {
   text-align: center;
   padding: 32px 20px;
