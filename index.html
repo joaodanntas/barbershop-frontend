@@ -330,9 +330,12 @@ async function loadBarbeiros() {
     barbeiros = await api("/api/barbeiros");
     const grid = document.getElementById("barberGrid");
     grid.innerHTML = barbeiros.map(b => `
-      <div class="choice-card" data-id="${b.id}">
-        <div class="name">${escapeHtml(b.nome)}</div>
-        <div class="meta">${escapeHtml(b.telefone) || "Barbeiro"}</div>
+      <div class="choice-card ${b.fotoBase64 ? "choice-card-com-foto" : ""}" data-id="${b.id}">
+        ${b.fotoBase64 ? `<img src="${b.fotoBase64}" class="foto-preview foto-preview-md" alt="${escapeHtml(b.nome)}">` : ""}
+        <div class="info">
+          <div class="name">${escapeHtml(b.nome)}</div>
+          <div class="meta">${escapeHtml(b.telefone) || "Barbeiro"}</div>
+        </div>
       </div>`).join("");
     grid.querySelectorAll(".choice-card").forEach(el => el.onclick = () => selectBarbeiro(el));
   } catch (e) { toast(e.message, true); }

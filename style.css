@@ -345,6 +345,44 @@ select { font-family: 'Work Sans', sans-serif; }
 .toggle-password img { width: 18px; height: 18px; opacity: 0.6; }
 .toggle-password:hover img { opacity: 1;}
 
+.foto-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  display: block;
+}
+.foto-preview-sm {
+  width: 44px;
+  height: 44px;
+}
+.foto-preview-md {
+  width: 56px;
+  height: 56px;
+}
+
+.choice-card-com-foto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.choice-card-com-foto .foto-preview {
+  flex-shrink: 0;
+}
+.choice-card-com-foto .name {
+  margin-bottom: 2px;
+}
+.choice-card-com-foto .info {
+  min-width: 0;
+}
+.choice-card-com-foto .name,
+.choice-card-com-foto .meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 footer {
   text-align: center;
   padding: 32px 20px;

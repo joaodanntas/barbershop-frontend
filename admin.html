@@ -53,6 +53,11 @@
         <summary style="cursor:pointer;font-weight:600;color:var(--brick);margin-bottom:12px">+ Cadastrar barbeiro</summary>
         <div class="field" style="max-width:320px"><label>Nome</label><input type="text" id="newBarberNome"></div>
         <div class="field" style="max-width:320px"><label>Telefone</label><input type="tel" id="newBarberTelefone"></div>
+        <div class="field" style="max-width:320px">
+          <label>Foto (opcional)</label>
+          <input type="file" id="newBarberFoto" accept="image/*">
+          <img id="newBarberFotoPreview" class="foto-preview hidden" style="margin-top:10px">
+        </div>
         <button class="btn btn-outline btn-small" id="btnAddBarber">Adicionar</button>
       </details>
     </section>
@@ -151,6 +156,12 @@
     <h3>Editar barbeiro</h3>
     <div class="field"><label>Nome</label><input type="text" id="editBarbeiroNome"></div>
     <div class="field"><label>Telefone</label><input type="tel" id="editBarbeiroTelefone"></div>
+    <div class="field">
+      <label>Foto</label>
+      <img id="editBarbeiroFotoPreview" class="foto-preview hidden" style="margin-bottom:10px">
+      <input type="file" id="editBarbeiroFoto" accept="image/*">
+      <button type="button" class="link-btn" id="btnRemoverFotoBarbeiro" style="display:block;margin-top:6px;font-size:12px">Remover foto</button>
+    </div>
     <button class="btn btn-primary btn-small" id="btnSalvarBarbeiro" style="margin-bottom:20px">Salvar dados</button>
 
     <div class="stripes" style="margin-bottom:20px"></div>
@@ -401,7 +412,10 @@ async function loadBarbeiros() {
     barbeirosCache = await api("/api/barbeiros/todos");
     document.getElementById("barberList").innerHTML = barbeirosCache.map(b => `
       <div class="appt">
-        <div class="appt-info"><div class="name">${escapeHtml(b.nome)}</div><div class="meta">${escapeHtml(b.telefone) || "—"}</div></div>
+        <div style="display:flex;align-items:center;gap:14px">
+          ${b.fotoBase64 ? `<img src="${b.fotoBase64}" class="foto-preview foto-preview-sm" alt="${escapeHtml(b.nome)}">` : ""}
+          <div class="appt-info"><div class="name">${escapeHtml(b.nome)}</div><div class="meta">${escapeHtml(b.telefone) || "—"}</div></div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="badge ${b.ativo ? "badge-confirmado" : "badge-cancelado"}">${b.ativo ? "Ativo" : "Inativo"}</span>
           <button class="btn btn-outline btn-small" data-id="${b.id}">Editar</button>
@@ -422,15 +436,35 @@ async function loadBarbeiros() {
   } catch (e) { toast(e.message, true); }
 }
 
+let newBarberFotoBase64 = null;
+
+document.getElementById("newBarberFoto").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    newBarberFotoBase64 = await processarImagemParaBase64(file);
+    const preview = document.getElementById("newBarberFotoPreview");
+    preview.src = newBarberFotoBase64;
+    preview.classList.remove("hidden");
+  } catch (err) {
+    toast(err.message, true);
+    e.target.value = "";
+    newBarberFotoBase64 = null;
+  }
+});
+
 document.getElementById("btnAddBarber").onclick = async () => {
   const nome = document.getElementById("newBarberNome").value.trim();
   const telefone = document.getElementById("newBarberTelefone").value.trim();
   if (!nome) return toast("Informe o nome", true);
   try {
-    await api("/api/barbeiros", { method: "POST", body: JSON.stringify({ nome, telefone }) });
+    await api("/api/barbeiros", { method: "POST", body: JSON.stringify({ nome, telefone, fotoBase64: newBarberFotoBase64 }) });
     toast("Barbeiro cadastrado");
     document.getElementById("newBarberNome").value = "";
     document.getElementById("newBarberTelefone").value = "";
+    document.getElementById("newBarberFoto").value = "";
+    document.getElementById("newBarberFotoPreview").classList.add("hidden");
+    newBarberFotoBase64 = null;
     loadBarbeiros();
   } catch (e) { toast(e.message, true); }
 };
@@ -621,13 +655,46 @@ document.getElementById("btnAddDisp").onclick = async () => {
 // ---------- Editar barbeiro ----------
 let barbeiroEditandoId = null;
 
+let editBarbeiroFotoBase64 = null;
+
 async function abrirEdicaoBarbeiro(barbeiro) {
   barbeiroEditandoId = barbeiro.id;
   document.getElementById("editBarbeiroNome").value = barbeiro.nome;
   document.getElementById("editBarbeiroTelefone").value = barbeiro.telefone || "";
+  editBarbeiroFotoBase64 = barbeiro.fotoBase64 || null;
+  document.getElementById("editBarbeiroFoto").value = "";
+  atualizarPreviewFotoEdicao();
   document.getElementById("editBarbeiroModal").classList.remove("hidden");
   await carregarDisponibilidadesDoModal();
 }
+
+function atualizarPreviewFotoEdicao() {
+  const preview = document.getElementById("editBarbeiroFotoPreview");
+  if (editBarbeiroFotoBase64) {
+    preview.src = editBarbeiroFotoBase64;
+    preview.classList.remove("hidden");
+  } else {
+    preview.classList.add("hidden");
+  }
+}
+
+document.getElementById("editBarbeiroFoto").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    editBarbeiroFotoBase64 = await processarImagemParaBase64(file);
+    atualizarPreviewFotoEdicao();
+  } catch (err) {
+    toast(err.message, true);
+    e.target.value = "";
+  }
+});
+
+document.getElementById("btnRemoverFotoBarbeiro").onclick = () => {
+  editBarbeiroFotoBase64 = null;
+  document.getElementById("editBarbeiroFoto").value = "";
+  atualizarPreviewFotoEdicao();
+};
 
 let disponibilidadesCache = [];
 
@@ -678,7 +745,7 @@ document.getElementById("btnSalvarBarbeiro").onclick = async () => {
   const telefone = document.getElementById("editBarbeiroTelefone").value.trim();
   if (!nome) return toast("Informe o nome", true);
   try {
-    await api(`/api/barbeiros/${barbeiroEditandoId}`, { method: "PUT", body: JSON.stringify({ nome, telefone }) });
+    await api(`/api/barbeiros/${barbeiroEditandoId}`, { method: "PUT", body: JSON.stringify({ nome, telefone, fotoBase64: editBarbeiroFotoBase64 }) });
     toast("Dados do barbeiro atualizados");
     loadBarbeiros();
   } catch (e) { toast(e.message, true); }

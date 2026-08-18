@@ -1,5 +1,6 @@
 // ===== Configuração =====
-const API_BASE_URL = "https://barbershop-api-acij.onrender.com";
+//const API_BASE_URL = "https://barbershop-api-acij.onrender.com";
+const API_BASE_URL = "https://localhost:7160";
 
 // ===== Auth helpers =====
 function getToken() { return localStorage.getItem("bs_token"); }
@@ -125,4 +126,36 @@ function statusLabel(status, canceladoPor) {
     return canceladoPor === "Barbeiro" ? "Cancelado pelo barbeiro" : "Cancelado pelo cliente";
   }
   return { Pendente: "Pendente", Confirmado: "Confirmado", Cancelado: "Cancelado" }[status] || status;
+}
+// ===== Processamento de foto (crop quadrado + redimensionamento) =====
+function processarImagemParaBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("O arquivo selecionado não é uma imagem."));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const TAMANHO = 300; // px, lado do quadrado final
+        const menorLado = Math.min(img.width, img.height);
+        const offsetX = (img.width - menorLado) / 2;
+        const offsetY = (img.height - menorLado) / 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = TAMANHO;
+        canvas.height = TAMANHO;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, offsetX, offsetY, menorLado, menorLado, 0, 0, TAMANHO, TAMANHO);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    reader.readAsDataURL(file);
+  });
 }
