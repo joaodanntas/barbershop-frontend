@@ -1,6 +1,5 @@
 // ===== Configuração =====
-//const API_BASE_URL = "https://barbershop-api-acij.onrender.com";
-const API_BASE_URL = "https://localhost:7160";
+const API_BASE_URL = "https://barbershop-api-acij.onrender.com";
 
 // ===== Auth helpers =====
 function getToken() { return localStorage.getItem("bs_token"); }

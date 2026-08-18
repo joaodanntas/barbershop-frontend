@@ -376,11 +376,14 @@ select { font-family: 'Work Sans', sans-serif; }
 .choice-card-com-foto .info {
   min-width: 0;
 }
-.choice-card-com-foto .name,
-.choice-card-com-foto .meta {
+.choice-card-com-foto .name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.choice-card-com-foto .meta {
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 footer {
