@@ -95,9 +95,9 @@
 
     <div id="cadastroForm" class="hidden">
       <h3>Criar conta</h3>
-      <div class="field"><label>Nome</label><input type="text" id="cadNome"></div>
-      <div class="field"><label>Email</label><input type="email" id="cadEmail"></div>
-      <div class="field"><label>Telefone</label><input type="tel" id="cadTelefone"></div>
+      <div class="field"><label>Nome</label><input type="text" id="cadNome" required></div>
+      <div class="field"><label>Email</label><input type="email" id="cadEmail" required></div>
+      <div class="field"><label>Telefone</label><input type="tel" id="cadTelefone" required></div>
       <div class="field">
         <label>Senha</label>
         <div class="password-wrapper">
@@ -237,11 +237,18 @@ document.getElementById("btnLogin").onclick = async () => {
     toast(`Bem-vindo, ${data.nome.split(" ")[0]}!`);
   } catch (e) {
     toast(e.message, true);
+    destacarCriarConta();
   } finally {
     btn.disabled = false;
     btn.textContent = textoOriginal;
   }
 };
+
+function destacarCriarConta() {
+  const tab = document.getElementById("tabCadastro");
+  tab.classList.add("highlight");
+  setTimeout(() => tab.classList.remove("highlight"), 2000);
+}
 document.getElementById("loginSenha").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("btnLogin").click();
 });
@@ -261,7 +268,7 @@ document.getElementById("btnCadastro").onclick = async () => {
   const telefone = document.getElementById("cadTelefone").value.trim();
   const senha = document.getElementById("cadSenha").value;
   const senhaConfirmar = document.getElementById("cadSenhaConfirmar").value;
-  if (!nome || !email || !senha) return toast("Preencha os campos obrigatórios", true);
+  if (!nome || !telefone || !email || !senha) return toast("Preencha os campos obrigatórios", true);
   if (senha !== senhaConfirmar) return toast("As senhas não coincidem", true);
   try {
     const data = await api("/api/auth/cadastro", { method: "POST", body: JSON.stringify({ nome, email, senha, telefone }) });

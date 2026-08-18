@@ -162,6 +162,16 @@
   </div>
 </div>
 
+<div class="modal-backdrop hidden" id="clienteModal">
+  <div class="modal">
+    <h3>Dados do cliente</h3>
+    <div class="field"><label>Nome</label><input type="text" id="clienteNomeView" readonly></div>
+    <div class="field"><label>Telefone</label><input type="text" id="clienteTelefoneView" readonly></div>
+    <div class="field"><label>Email</label><input type="text" id="clienteEmailView" readonly></div>
+    <button class="link-btn" id="btnCloseCliente" style="width:100%">Fechar</button>
+  </div>
+</div>
+
 <!-- Modal editar barbeiro -->
 <div class="modal-backdrop hidden" id="editBarbeiroModal">
   <div class="modal" style="max-width:520px">
@@ -314,17 +324,24 @@ async function loadAppointments(pagina = 1) {
     }
 
     list.innerHTML = itens.map(a => `
-      <div class="appt">
-        <div class="appt-info">
-          <div class="name">${escapeHtml(a.clienteNome)} · ${escapeHtml(a.servicoNome)}</div>
-          <div class="meta">${escapeHtml(a.barbeiroNome)} · ${formatDateTime(a.dataHoraInicio)}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status, a.canceladoPor)}</span>
-          ${a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
-          ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
-        </div>
-      </div>`).join("");
+  <div class="appt">
+    <div class="appt-info">
+      <div class="name">
+        <button class="link-btn" data-nome="${escapeHtml(a.clienteNome)}" data-telefone="${escapeHtml(a.clienteTelefone || "")}" data-email="${escapeHtml(a.clienteEmail)}">${escapeHtml(a.clienteNome)}</button>
+        · ${escapeHtml(a.servicoNome)}
+      </div>
+      <div class="meta">${escapeHtml(a.barbeiroNome)} · ${formatDateTime(a.dataHoraInicio)}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status, a.canceladoPor)}</span>
+      ${a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
+      ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
+    </div>
+  </div>`).join("");
+
+    list.querySelectorAll("button[data-nome]").forEach(btn => {
+      btn.onclick = () => abrirDadosCliente(btn.dataset.nome, btn.dataset.telefone, btn.dataset.email);
+    });
 
     list.querySelectorAll("button[data-id]").forEach(btn => {
       btn.onclick = async () => {
@@ -354,6 +371,16 @@ async function loadAppointments(pagina = 1) {
     }
   } catch (e) { toast(e.message, true); }
 }
+
+function abrirDadosCliente(nome, telefone, email) {
+  document.getElementById("clienteNomeView").value = nome;
+  document.getElementById("clienteTelefoneView").value = telefone || "—";
+  document.getElementById("clienteEmailView").value = email;
+  document.getElementById("clienteModal").classList.remove("hidden");
+}
+document.getElementById("btnCloseCliente").onclick = () => {
+  document.getElementById("clienteModal").classList.add("hidden");
+};
 
 // ---------- Logs de auditoria ----------
 let paginaAtualLogs = 1;

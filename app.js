@@ -68,9 +68,10 @@ function toast(message, isError = false) {
   el.textContent = message;
   el.classList.toggle("error", isError);
   el.classList.add("show");
+  const duracao = isError ? 4000 : 2000;
   setTimeout(() => {
     if (meuToken === toastToken) el.classList.remove("show");
-  }, 2000);
+  }, duracao);
 }
 
 // ===== Password Toggle =====
