@@ -193,7 +193,7 @@ function renderNav() {
     document.getElementById("btnAccount").onclick = openAccountModal;
     document.getElementById("btnMyAppts").onclick = showMyAppointments;
     document.getElementById("btnLogout").onclick = () => { clearSession(); renderNav(); toast("Sessão encerrada"); document.getElementById("myApptsCard").classList.add("hidden"); };
-  } else if (user && user.perfil === "Admin") {
+  } else if (user && (user.perfil === "Admin" || user.perfil === "SubAdmin")) {
     nav.innerHTML = `
       <a href="admin.html" class="btn btn-ghost btn-small" style="text-decoration:none;color:var(--bone)">Painel administrativo</a>
       <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>

@@ -42,11 +42,17 @@
     <section class="card">
       <div class="section-label">Agenda</div>
       <h2 class="section-title">Todos os agendamentos</h2>
+      <div class="field hidden" id="filtroBarbeiroWrapper" style="max-width:280px">
+        <label>Filtrar por barbeiro</label>
+        <select id="filtroBarbeiro" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:2px;font-family:'Work Sans'">
+          <option value="">Todos os barbeiros</option>
+        </select>
+      </div>
       <div id="apptList"></div>
       <div id="apptPaginacao" style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="secBarbeiros">
       <div class="section-label">Equipe</div>
       <h2 class="section-title">Barbeiros</h2>
       <div id="barberList" style="margin-bottom:20px"></div>
@@ -63,7 +69,7 @@
       </details>
     </section>
 
-    <section class="card">
+    <section class="card" id="secServicos">
       <div class="section-label">Cardápio</div>
       <h2 class="section-title">Serviços</h2>
       <div id="serviceList" style="margin-bottom:20px"></div>
@@ -80,7 +86,7 @@
       </details>
     </section>
 
-    <details class="card">
+    <details class="card" id="secDisponilidade">
       <summary>
         <div class="section-label">Horários de trabalho</div>
         <h2 class="section-title">Disponibilidade</h2>
@@ -112,7 +118,7 @@
       </div>
     </details>
 
-    <details class="card">
+    <details class="card" id="secBloqueios">
       <summary>
         <div class="section-label">Fechado</div>
         <h2 class="section-title">Bloqueio de datas</h2>
@@ -136,7 +142,7 @@
       </div>
     </details>
 
-    <details class="card">
+    <details class="card" id="secLogs">
       <summary>
         <div class="section-label">Auditoria</div>
         <h2 class="section-title">Histórico de ações</h>
@@ -211,7 +217,16 @@
       </div>
       <button class="btn btn-outline btn-small" id="btnAddDispNoModal">Adicionar</button>
     </details>
-
+    <div class="stripes" style="margin-bottom:20px"></div>
+    <h3 style="font-size:20px;margin-bottom:10px">Acesso administrativo</h3>
+    <div id="subAdminAtual" style="font-size:13px;color:var(--silver-dim);margin-bottom:8px"></div>
+    <div class="field"><label>E-mail da conta do barbeiro</label><input type="email" id="editBarbeiroSubAdminEmail"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn btn-outline btn-small" id="btnVincularSubAdmin">Vincular</button>
+      <button class="btn btn-danger btn-small hidden" id="btnDesvincularSubAdmin">Desvincular</button>
+    </div>
+    <p style="color:var(--silver-dim);font-size:12px;margin-bottom:20px">O barbeiro precisa ter criado a própria conta no site antes de vincular.</p>
+    
     <button class="link-btn" id="btnCloseEditBarbeiro" style="width:100%;margin-top:20px">Fechar</button>
   </div>
 </div>
@@ -254,7 +269,7 @@ let barbeirosCache = [];
 function renderNav() {
   const nav = document.getElementById("navActions");
   const user = getUser();
-  if (user && user.perfil === "Admin") {
+  if (user && (user.perfil === "Admin" || user.perfil === "SubAdmin")) {
     nav.innerHTML = `<span style="color:var(--cream);font-size:14px">${user.nome}</span> <button class="btn btn-ghost btn-small" id="btnLogout">Sair</button>`;
     document.getElementById("btnLogout").onclick = () => { clearSession(); location.reload(); };
   } else {
@@ -264,9 +279,10 @@ function renderNav() {
 
 function checkAccess() {
   const user = getUser();
-  if (user && user.perfil === "Admin") {
+  if (user && (user.perfil === "Admin" || user.perfil === "SubAdmin")) {
     document.getElementById("loginGate").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
+    aplicarVisibilidadePorPerfil(user.perfil);
     loadAll();
   } else {
     document.getElementById("loginGate").classList.remove("hidden");
@@ -275,6 +291,16 @@ function checkAccess() {
       toast("Essa conta não tem acesso administrativo. Faça login com uma conta de administrador.", true);
     }
   }
+}
+
+function aplicarVisibilidadePorPerfil(perfil) {
+  const somenteAgendamentos = perfil === "SubAdmin";
+  ["secBarbeiros", "secServicos", "secDisponibilidade", "secBloqueios", "secLogs"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("hidden", somenteAgendamentos);
+  });
+  const filtroWrapper = document.getElementById("filtroBarbeiroWrapper");
+  if (filtroWrapper) filtroWrapper.classList.toggle("hidden", perfil !== "Admin");
 }
 
 document.getElementById("btnLogin").onclick = async () => {
@@ -288,8 +314,11 @@ document.getElementById("btnLogin").onclick = async () => {
 
   try {
     const data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, senha }) });
-    if (data.perfil !== "Admin") { toast("Essa conta não tem acesso administrativo", true); return; }
-    saveSession(data.token, data.nome, data.email, data.perfil);
+    if (data.perfil !== "Admin" && data.perfil !== "SubAdmin") {
+      toast("Essa conta não tem acesso administrativo", true);
+      return;
+    }
+    saveSession(data.token, data.nome, data.email, data.perfil, data.barbeiroId);
     renderNav(); checkAccess();
     toast(`Bem-vindo, ${data.nome}`);
   } catch (e) {
@@ -304,15 +333,27 @@ document.getElementById("loginSenha").addEventListener("keydown", (e) => {
 });
 
 async function loadAll() {
-  await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos(), loadBloqueios(), loadLogs()]);
+  const user = getUser();
+  if (user.perfil === "SubAdmin") {
+    await loadAppointments();
+  } else {
+    await Promise.all([loadAppointments(), loadBarbeiros(), loadServicos(), loadBloqueios(), loadLogs()]);
+  }
 }
 
 // ---------- Agendamentos ----------
 let paginaAtualAgendamentos = 1;
 
 async function loadAppointments(pagina = 1) {
+  const user = getUser();
+  const isSubAdmin = user.perfil === "SubAdmin";
+  const filtro = !isSubAdmin ? (document.getElementById("filtroBarbeiro")?.value || "") : "";
+
   try {
-    const resultado = await api(`/api/agendamentos/admin/todos?pagina=${pagina}&tamanhoPagina=15`);
+    const qs = new URLSearchParams({ pagina, tamanhoPagina: 15 });
+    if (filtro) qs.set("barbeiroId", filtro);
+
+    const resultado = await api(`/api/agendamentos/admin/todos?${qs.toString()}`);
     const { itens, paginaAtual, totalPaginas, totalItens } = resultado;
     paginaAtualAgendamentos = paginaAtual;
 
@@ -322,6 +363,8 @@ async function loadAppointments(pagina = 1) {
       document.getElementById("apptPaginacao").innerHTML = "";
       return;
     }
+
+    const podeAgir = isSubAdmin; // admin agora só visualiza; quem confirma/cancela é o próprio barbeiro
 
     list.innerHTML = itens.map(a => `
   <div class="appt">
@@ -334,8 +377,8 @@ async function loadAppointments(pagina = 1) {
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span class="badge badge-${a.status.toLowerCase()}">${statusLabel(a.status, a.canceladoPor)}</span>
-      ${a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
-      ${a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
+      ${podeAgir && a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
+      ${podeAgir && a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
     </div>
   </div>`).join("");
 
@@ -356,7 +399,6 @@ async function loadAppointments(pagina = 1) {
       };
     });
 
-    // Controles de paginação
     const paginacaoEl = document.getElementById("apptPaginacao");
     if (totalPaginas <= 1) {
       paginacaoEl.innerHTML = "";
@@ -478,9 +520,14 @@ async function loadBarbeiros() {
       };
     });
 
-    const sel = document.getElementById("dispBarbeiro");
-    sel.innerHTML = `<option value="" disabled selected>Selecione o barbeiro</option>` +
-      barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+    const selFiltro = document.getElementById("filtroBarbeiro");
+    if (selFiltro) {
+      const valorAtual = selFiltro.value;
+      selFiltro.innerHTML = `<option value="">Todos os barbeiros</option>` +
+        barbeirosCache.filter(b => b.ativo).map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+      selFiltro.value = valorAtual;
+      selFiltro.onchange = () => loadAppointments(1);
+    }
 
     const selBloqueio = document.getElementById("bloqueioBarbeiro");
     selBloqueio.innerHTML = `<option value="">Todos os barbeiros (feriado)</option>` +
@@ -732,9 +779,45 @@ async function abrirEdicaoBarbeiro(barbeiro) {
   editBarbeiroFotoBase64 = barbeiro.fotoBase64 || null;
   document.getElementById("editBarbeiroFoto").value = "";
   atualizarPreviewFotoEdicao();
+
+  document.getElementById("editBarbeiroSubAdminEmail").value = "";
+  const subAdminAtualEl = document.getElementById("subAdminAtual");
+  const btnDesvincular = document.getElementById("btnDesvincularSubAdmin");
+  if (barbeiro.subAdminEmail) {
+    subAdminAtualEl.textContent = `Vinculado a: ${barbeiro.subAdminEmail}`;
+    btnDesvincular.classList.remove("hidden");
+  } else {
+    subAdminAtualEl.textContent = "Nenhuma conta vinculada ainda.";
+    btnDesvincular.classList.add("hidden");
+  }
+
   document.getElementById("editBarbeiroModal").classList.remove("hidden");
   await carregarDisponibilidadesDoModal();
 }
+
+document.getElementById("btnVincularSubAdmin").onclick = async () => {
+  const email = document.getElementById("editBarbeiroSubAdminEmail").value.trim();
+  if (!email) return toast("Informe o e-mail da conta do barbeiro", true);
+  try {
+    const resultado = await api(`/api/barbeiros/${barbeiroEditandoId}/vincular-usuario`, {
+      method: "PUT",
+      body: JSON.stringify({ email })
+    });
+    toast(resultado.mensagem);
+    document.getElementById("editBarbeiroModal").classList.add("hidden");
+    loadBarbeiros();
+  } catch (e) { toast(e.message, true); }
+};
+
+document.getElementById("btnDesvincularSubAdmin").onclick = async () => {
+  if (!confirm("Remover o acesso administrativo desse barbeiro?")) return;
+  try {
+    await api(`/api/barbeiros/${barbeiroEditandoId}/vincular-usuario`, { method: "DELETE" });
+    toast("Acesso removido");
+    document.getElementById("editBarbeiroModal").classList.add("hidden");
+    loadBarbeiros();
+  } catch (e) { toast(e.message, true); }
+};
 
 function atualizarPreviewFotoEdicao() {
   const preview = document.getElementById("editBarbeiroFotoPreview");

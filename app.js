@@ -7,9 +7,9 @@ function getUser() {
   const raw = localStorage.getItem("bs_user");
   return raw ? JSON.parse(raw) : null;
 }
-function saveSession(token, nome, email, perfil) {
+function saveSession(token, nome, email, perfil, barbeiroId) {
   localStorage.setItem("bs_token", token);
-  localStorage.setItem("bs_user", JSON.stringify({ nome, email, perfil }));
+  localStorage.setItem("bs_user", JSON.stringify({ nome, email, perfil, barbeiroId: barbeiroId ?? null }));
 }
 function clearSession() {
   localStorage.removeItem("bs_token");
