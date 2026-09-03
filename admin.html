@@ -135,6 +135,11 @@
             </select>
           </div>
           <div class="field" style="max-width:320px"><label>Data</label><input type="date" id="bloqueioData"></div>
+          <div style="display:flex;gap:12px;max-width:320px">
+            <div class="field" style="flex:1"><label>Horário início (opcional)</label><input type="time" id="bloqueioHoraInicio"></div>
+            <div class="field" style="flex:1"><label>Horário fim (opcional)</label><input type="time" id="bloqueioHoraFim"></div>
+          </div>
+          <p style="color:var(--silver-dim);font-size:12px;margin:-8px 0 14px">Deixe os dois em branco para bloquear o dia inteiro.</p>
           <div class="field" style="max-width:320px"><label>Motivo (opcional)</label><input type="text" id="bloqueioMotivo"></div>
           <button class="btn btn-outline btn-small" id="btnAddBloqueio">Adicionar</button>
           <button class="link-btn hidden" id="btnCancelEditBloqueio" style="margin-left:10px">Cancelar edição</button>
@@ -669,7 +674,7 @@ async function loadBloqueios() {
         <div class="appt">
           <div class="appt-info">
             <div class="name">${b.barbeiroNome ? escapeHtml(b.barbeiroNome) : "Todos os barbeiros (feriado)"}</div>
-        <div class="meta">${formatDateOnly(b.data)}${b.motivo ? " · " + escapeHtml(b.motivo) : ""}</div>
+            <div class="meta">${formatDateOnly(b.data)}${b.horaInicio ? ` · ${b.horaInicio.substring(0,5)}-${b.horaFim.substring(0,5)}` : " · Dia inteiro"}${b.motivo ? " · " + escapeHtml(b.motivo) : ""}</div>
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-outline btn-small" data-action="edit" data-id="${b.id}">Editar</button>
@@ -701,17 +706,28 @@ async function loadBloqueios() {
 document.getElementById("btnAddBloqueio").onclick = async () => {
   const barbeiroId = document.getElementById("bloqueioBarbeiro").value || null;
   const data = document.getElementById("bloqueioData").value;
+  const horaInicioVal = document.getElementById("bloqueioHoraInicio").value;
+  const horaFimVal = document.getElementById("bloqueioHoraFim").value;
   const motivo = document.getElementById("bloqueioMotivo").value.trim() || null;
   if (!data) return toast("Escolha uma data", true);
+  if ((horaInicioVal && !horaFimVal) || (!horaInicioVal && horaFimVal)) {
+    return toast("Informe início e fim do horário, ou deixe os dois em branco", true);
+  }
 
-  const payload = { barbeiroId: barbeiroId ? parseInt(barbeiroId) : null, data, motivo };
+  const payload = {
+    barbeiroId: barbeiroId ? parseInt(barbeiroId) : null,
+    data,
+    horaInicio: horaInicioVal ? horaInicioVal + ":00" : null,
+    horaFim: horaFimVal ? horaFimVal + ":00" : null,
+    motivo
+  };
 
   try {
     if (bloqueioEditandoId) {
       try {
         await api(`/api/bloqueios/${bloqueioEditandoId}`, { method: "DELETE" });
       } catch (deleteError) {
-        // Já foi removido antes (ex: clicou em Remover separadamente) — segue o fluxo normalmente
+        // já foi removido antes — segue o fluxo normalmente
       }
       bloqueioEditandoId = null;
       document.getElementById("btnAddBloqueio").textContent = "Adicionar";
@@ -721,6 +737,8 @@ document.getElementById("btnAddBloqueio").onclick = async () => {
     toast(bloqueioEditandoId ? "Bloqueio atualizado" : "Bloqueio cadastrado");
     document.getElementById("bloqueioBarbeiro").value = "";
     document.getElementById("bloqueioData").value = "";
+    document.getElementById("bloqueioHoraInicio").value = "";
+    document.getElementById("bloqueioHoraFim").value = "";
     document.getElementById("bloqueioMotivo").value = "";
     loadBloqueios();
   } catch (e) { toast(e.message, true); }
@@ -732,6 +750,8 @@ function abrirEdicaoBloqueio(bloqueio) {
   bloqueioEditandoId = bloqueio.id;
   document.getElementById("bloqueioBarbeiro").value = bloqueio.barbeiroId || "";
   document.getElementById("bloqueioData").value = bloqueio.data;
+  document.getElementById("bloqueioHoraInicio").value = bloqueio.horaInicio ? bloqueio.horaInicio.substring(0, 5) : "";
+  document.getElementById("bloqueioHoraFim").value = bloqueio.horaFim ? bloqueio.horaFim.substring(0, 5) : "";
   document.getElementById("bloqueioMotivo").value = bloqueio.motivo || "";
   document.getElementById("btnAddBloqueio").textContent = "Salvar alterações";
   document.getElementById("btnCancelEditBloqueio").classList.remove("hidden");
@@ -745,6 +765,8 @@ document.getElementById("btnCancelEditBloqueio").onclick = () => {
   document.getElementById("btnCancelEditBloqueio").classList.add("hidden");
   document.getElementById("bloqueioBarbeiro").value = "";
   document.getElementById("bloqueioData").value = "";
+  document.getElementById("bloqueioHoraInicio").value = "";
+  document.getElementById("bloqueioHoraFim").value = "";
   document.getElementById("bloqueioMotivo").value = "";
 };
 
