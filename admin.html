@@ -364,9 +364,9 @@ async function loadAppointments(pagina = 1) {
       return;
     }
 
-    const podeAgir = isSubAdmin; // admin agora só visualiza; quem confirma/cancela é o próprio barbeiro
-
-    list.innerHTML = itens.map(a => `
+    list.innerHTML = itens.map(a => {
+      const podeAgir = user.barbeiroId && a.barbeiroId === user.barbeiroId;
+      return `
   <div class="appt">
     <div class="appt-info">
       <div class="name">
@@ -380,7 +380,8 @@ async function loadAppointments(pagina = 1) {
       ${podeAgir && a.status === "Pendente" ? `<button class="btn btn-outline btn-small" data-id="${a.id}" data-status="Confirmado">Confirmar</button>` : ""}
       ${podeAgir && a.status !== "Cancelado" ? `<button class="btn btn-danger btn-small" data-id="${a.id}" data-status="Cancelado">Cancelar</button>` : ""}
     </div>
-  </div>`).join("");
+  </div>`;
+    }).join("");
 
     list.querySelectorAll("button[data-nome]").forEach(btn => {
       btn.onclick = () => abrirDadosCliente(btn.dataset.nome, btn.dataset.telefone, btn.dataset.email);
