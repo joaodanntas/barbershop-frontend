@@ -394,10 +394,10 @@ document.getElementById("btnLoadSlots").onclick = async () => {
     document.getElementById("slotStep").classList.remove("hidden");
     document.getElementById("noSlots").style.display = slots.length ? "none" : "block";
     grid.innerHTML = slots.map(s => `
-      <div class="slot ${s.disponivel ? "" : "slot-reservado"}" data-inicio="${s.inicio}">
-        ${formatTime(s.inicio)}
-        ${s.disponivel ? "" : `<span class="slot-watermark">RESERVADO</span>`}
-      </div>`).join("");
+  <div class="slot ${s.disponivel ? "" : "slot-reservado"}" data-inicio="${s.inicio}">
+    <span class="slot-time">${formatTime(s.inicio)}</span>
+    ${s.disponivel ? "" : `<span class="slot-tag">RESERVADO</span>`}
+  </div>`).join("");
     // só os disponíveis recebem clique
     grid.querySelectorAll(".slot:not(.slot-reservado)").forEach(el => el.onclick = () => selectSlot(el));
   } catch (e) { toast(e.message, true); }

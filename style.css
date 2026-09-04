@@ -422,32 +422,41 @@ footer {
 }
 
 /* ---------- Slot reservado (marca d'água) ---------- */
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
 .slot.slot-reservado {
-  position: relative;
   cursor: not-allowed;
-  opacity: 0.55;
   background: var(--bone-2);
+  border-style: solid;
 }
 .slot.slot-reservado:hover {
   border-color: var(--line);
-  border-style: dashed;
 }
-.slot-watermark {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+
+.slot-time { line-height: 1; }
+.slot.slot-reservado .slot-time {
   color: var(--silver-dim);
-  background: rgba(237, 232, 222, 0.6);
-  transform: rotate(-10deg);
-  pointer-events: none;
-  white-space: nowrap;
+  text-decoration: line-through;
+  text-decoration-color: #8A5A52;
+  text-decoration-thickness: 1.5px;
+}
+
+.slot-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8A5A52;
+  background: #EBDAD7;
+  padding: 2px 9px;
+  border-radius: 20px;
 }
 
 @media (max-width: 600px) {
